@@ -20,7 +20,8 @@ namespace BVH.TDS
         private HttpClient _client { get; set; }
         private HttpClientHandler _handler { get; set; }
 
-        public TDSProxy() {
+        public TDSProxy()
+        {
             SetupHttpRequest();
         }
 
@@ -55,6 +56,7 @@ namespace BVH.TDS
             }
         }
 
+        // Get coin by token
         public async Task<TDSResponse<TDSLogin2>> GetCoin(AccountInfor row)
         {
             try
@@ -66,6 +68,32 @@ namespace BVH.TDS
             }
             catch (Exception ex)
             {
+                throw ex;
+            }
+        }
+
+        // Get coin by Id Pass
+        public async Task<TDSLogin2> GetCoin2(AccountInfor row)
+        {
+            try
+            {
+                var payload = new FormUrlEncodedContent(new[] {
+                            new KeyValuePair<string, string>("username", row.Username),
+                            new KeyValuePair<string, string>("password", row.Password),
+                        });
+                var result = await _client.PostAsync("/scr/login2.php", payload);
+                result.EnsureSuccessStatusCode();
+                var content = await result.Content.ReadAsStringAsync();
+                if (String.IsNullOrEmpty(content))
+                {
+                    throw new Exception("content null");
+                }
+
+                return JsonConvert.DeserializeObject<TDSLogin2>(content);
+            }
+            catch (Exception ex)
+            {
+                row.State = $"Lỗi khi đăng nhập: {ex.Message}!";
                 throw ex;
             }
         }
@@ -116,6 +144,17 @@ namespace BVH.TDS
             result.EnsureSuccessStatusCode();
             return await result.Content.ReadAsStringAsync();
         }
+        public async Task<string> TangXu(AccountInfor row, string userNhanXu, string soXu)
+        {
+            var payload = new FormUrlEncodedContent(new[] {
+                                new KeyValuePair<string, string>("usernhan", userNhanXu),
+                                new KeyValuePair<string, string>("xutang", soXu)
+                            });
+
+            var result = await _client.PostAsync($"/view/tangxu/tangxu.php", payload);
+            result.EnsureSuccessStatusCode();
+            return await result.Content.ReadAsStringAsync();
+        }
 
         public async Task<string> GetGcaptchaKey(string accessToken)
         {
@@ -154,6 +193,6 @@ namespace BVH.TDS
             return JsonConvert.DeserializeObject<TDSResponse<TDSLogin2>>(content);
         }
 
-        
+
     }
 }

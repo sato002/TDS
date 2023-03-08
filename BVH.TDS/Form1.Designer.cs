@@ -29,7 +29,6 @@
         private void InitializeComponent()
         {
             this.grdAccount = new System.Windows.Forms.DataGridView();
-            this.btnGetToken = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.lbTotalCoin = new System.Windows.Forms.Label();
             this.btnGetCoin = new System.Windows.Forms.Button();
@@ -37,9 +36,18 @@
             this.label3 = new System.Windows.Forms.Label();
             this.lbCountAll = new System.Windows.Forms.Label();
             this.lbCountSelected = new System.Windows.Forms.Label();
+            this.btnGetToken = new System.Windows.Forms.Button();
+            this.txtUserNhanXu = new System.Windows.Forms.TextBox();
+            this.label4 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.numSoXuTang = new System.Windows.Forms.NumericUpDown();
+            this.label5 = new System.Windows.Forms.Label();
+            this.numLuong = new System.Windows.Forms.NumericUpDown();
+            this.label6 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grdAccount)).BeginInit();
             this.groupBox1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numSoXuTang)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numLuong)).BeginInit();
             this.SuspendLayout();
             // 
             // grdAccount
@@ -55,24 +63,13 @@
             this.grdAccount.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grdAccount_KeyDown);
             this.grdAccount.MouseClick += new System.Windows.Forms.MouseEventHandler(this.grdAccount_MouseClick);
             // 
-            // btnGetToken
-            // 
-            this.btnGetToken.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGetToken.Location = new System.Drawing.Point(16, 54);
-            this.btnGetToken.Name = "btnGetToken";
-            this.btnGetToken.Size = new System.Drawing.Size(104, 30);
-            this.btnGetToken.TabIndex = 1;
-            this.btnGetToken.Text = "Check Token";
-            this.btnGetToken.UseVisualStyleBackColor = true;
-            this.btnGetToken.Click += new System.EventHandler(this.btnGetToken_Click);
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(779, 9);
+            this.label1.Font = new System.Drawing.Font("Verdana", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(760, 12);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(53, 13);
+            this.label1.Size = new System.Drawing.Size(73, 18);
             this.label1.TabIndex = 2;
             this.label1.Text = "Tổng xu";
             // 
@@ -80,17 +77,17 @@
             // 
             this.lbTotalCoin.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbTotalCoin.ForeColor = System.Drawing.Color.Red;
-            this.lbTotalCoin.Location = new System.Drawing.Point(652, 27);
+            this.lbTotalCoin.Location = new System.Drawing.Point(572, 40);
             this.lbTotalCoin.Name = "lbTotalCoin";
             this.lbTotalCoin.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.lbTotalCoin.Size = new System.Drawing.Size(190, 29);
+            this.lbTotalCoin.Size = new System.Drawing.Size(270, 29);
             this.lbTotalCoin.TabIndex = 3;
             this.lbTotalCoin.Text = "0";
             // 
             // btnGetCoin
             // 
             this.btnGetCoin.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGetCoin.Location = new System.Drawing.Point(16, 18);
+            this.btnGetCoin.Location = new System.Drawing.Point(640, 6);
             this.btnGetCoin.Name = "btnGetCoin";
             this.btnGetCoin.Size = new System.Drawing.Size(104, 30);
             this.btnGetCoin.TabIndex = 4;
@@ -140,23 +137,114 @@
             this.lbCountSelected.TabIndex = 8;
             this.lbCountSelected.Text = "0";
             // 
+            // btnGetToken
+            // 
+            this.btnGetToken.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGetToken.Location = new System.Drawing.Point(524, 6);
+            this.btnGetToken.Name = "btnGetToken";
+            this.btnGetToken.Size = new System.Drawing.Size(104, 30);
+            this.btnGetToken.TabIndex = 1;
+            this.btnGetToken.Text = "Get Token";
+            this.btnGetToken.UseVisualStyleBackColor = true;
+            this.btnGetToken.Click += new System.EventHandler(this.btnGetToken_Click);
+            // 
+            // txtUserNhanXu
+            // 
+            this.txtUserNhanXu.Location = new System.Drawing.Point(82, 18);
+            this.txtUserNhanXu.Name = "txtUserNhanXu";
+            this.txtUserNhanXu.Size = new System.Drawing.Size(103, 20);
+            this.txtUserNhanXu.TabIndex = 9;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(6, 21);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(74, 13);
+            this.label4.TabIndex = 10;
+            this.label4.Text = "User Nhận Xu";
+            // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.btnGetToken);
-            this.groupBox1.Controls.Add(this.btnGetCoin);
-            this.groupBox1.Location = new System.Drawing.Point(12, 8);
+            this.groupBox1.Controls.Add(this.numSoXuTang);
+            this.groupBox1.Controls.Add(this.label5);
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.txtUserNhanXu);
+            this.groupBox1.Location = new System.Drawing.Point(19, 11);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(269, 90);
-            this.groupBox1.TabIndex = 9;
+            this.groupBox1.Size = new System.Drawing.Size(197, 83);
+            this.groupBox1.TabIndex = 11;
             this.groupBox1.TabStop = false;
-            this.groupBox1.Text = "Kiểm tra";
+            this.groupBox1.Text = "Tặng xu";
+            // 
+            // numSoXuTang
+            // 
+            this.numSoXuTang.Increment = new decimal(new int[] {
+            100000,
+            0,
+            0,
+            0});
+            this.numSoXuTang.Location = new System.Drawing.Point(82, 43);
+            this.numSoXuTang.Maximum = new decimal(new int[] {
+            5000000,
+            0,
+            0,
+            0});
+            this.numSoXuTang.Name = "numSoXuTang";
+            this.numSoXuTang.Size = new System.Drawing.Size(103, 20);
+            this.numSoXuTang.TabIndex = 12;
+            this.numSoXuTang.ThousandsSeparator = true;
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(6, 51);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(34, 13);
+            this.label5.TabIndex = 11;
+            this.label5.Text = "Số xu";
+            // 
+            // numLuong
+            // 
+            this.numLuong.Increment = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.numLuong.Location = new System.Drawing.Point(453, 12);
+            this.numLuong.Minimum = new decimal(new int[] {
+            10,
+            0,
+            0,
+            0});
+            this.numLuong.Name = "numLuong";
+            this.numLuong.Size = new System.Drawing.Size(54, 20);
+            this.numLuong.TabIndex = 12;
+            this.numLuong.Value = new decimal(new int[] {
+            40,
+            0,
+            0,
+            0});
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(413, 15);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(37, 13);
+            this.label6.TabIndex = 13;
+            this.label6.Text = "Luồng";
             // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(844, 563);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.numLuong);
             this.Controls.Add(this.groupBox1);
+            this.Controls.Add(this.btnGetToken);
+            this.Controls.Add(this.btnGetCoin);
             this.Controls.Add(this.lbCountSelected);
             this.Controls.Add(this.lbCountAll);
             this.Controls.Add(this.label3);
@@ -170,6 +258,9 @@
             this.Text = "TDS by HỘI TAY VỊN";
             ((System.ComponentModel.ISupportInitialize)(this.grdAccount)).EndInit();
             this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.numSoXuTang)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.numLuong)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -178,7 +269,6 @@
         #endregion
 
         private System.Windows.Forms.DataGridView grdAccount;
-        private System.Windows.Forms.Button btnGetToken;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label lbTotalCoin;
         private System.Windows.Forms.Button btnGetCoin;
@@ -186,7 +276,14 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label lbCountAll;
         private System.Windows.Forms.Label lbCountSelected;
+        private System.Windows.Forms.Button btnGetToken;
+        private System.Windows.Forms.TextBox txtUserNhanXu;
+        private System.Windows.Forms.Label label4;
         private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.NumericUpDown numSoXuTang;
+        private System.Windows.Forms.NumericUpDown numLuong;
+        private System.Windows.Forms.Label label6;
     }
 }
 

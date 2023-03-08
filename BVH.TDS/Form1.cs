@@ -1,39 +1,26 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Net.Http.Headers;
-using System.Net.Http;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
-using System.Net;
-using System.Threading;
-using System.Text.RegularExpressions;
-using System.Runtime.InteropServices;
-using RestSharp;
-using BVH.TDS.Properties;
-using static System.Net.Mime.MediaTypeNames;
-using static System.Net.WebRequestMethods;
 using BVHAU.TDS;
 using System.IO;
 using System.Globalization;
-using System.Text.Encodings.Web;
-using AnyCaptchaHelper;
-using AnyCaptchaHelper.Api;
+using System.Threading;
 
 namespace BVH.TDS
 {
     public partial class Form1 : Form
     {
-        
+
         private static string ACCOUNT_FILE_PATH = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "accounts.json");
 
-      
+        private SemaphoreSlim semaphore;
+
         private List<AccountInfor> lstAccountInfor;
 
         public Form1()
@@ -55,22 +42,29 @@ namespace BVH.TDS
             grdAccount.Columns[(int)EnumColumnOrder.TikUsername].Width = 100;
             grdAccount.Columns[(int)EnumColumnOrder.Coin].Width = 80;
             grdAccount.Columns[(int)EnumColumnOrder.State].Width = 197;
-            
         }
-
-        
 
         private void grdAccount_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
+                bool hasRowSelected = grdAccount.SelectedRows.Count > 0;
                 ContextMenu m = new ContextMenu();
-                m.MenuItems.Add(new MenuItem("Thêm từ clipboard (Tài khoản|Mật khẩu)", AddAccountFromClibboard));
+                m.MenuItems.Add(new MenuItem("Thêm acc (Tài khoản|Mật khẩu|Token)", AddAccountFromClibboard));
+                m.MenuItems.Add(new MenuItem("Copy acc (Tài khoản|Mật khẩu)", CopyAccount));
+                m.MenuItems.Add(new MenuItem("Copy acc (Tài khoản|Mật khẩu|Token)", CopyAccount2));
+                m.MenuItems.Add(new MenuItem("Thêm acc (Token) check xu", AddToken));
                 m.MenuItems.Add(new MenuItem("Đổi mật khẩu (sinh random)", ChangePasswordMenuItem_Click));
+                m.MenuItems.Add(new MenuItem("Tặng xu", TangXu));
                 m.MenuItems.Add(new MenuItem("Xóa", RemoveAccount));
 
-                m.Show(grdAccount, new Point(e.X, e.Y));
+                m.MenuItems[1].Enabled = hasRowSelected;
+                m.MenuItems[2].Enabled = hasRowSelected;
+                m.MenuItems[4].Enabled = hasRowSelected;
+                m.MenuItems[5].Enabled = hasRowSelected && txtUserNhanXu.Text.Length > 0 && numSoXuTang.Value >= 1000000;
+                m.MenuItems[6].Enabled = hasRowSelected;
 
+                m.Show(grdAccount, new Point(e.X, e.Y));
             }
         }
 
@@ -81,30 +75,49 @@ namespace BVH.TDS
                 string rawText;
                 string[] rowText;
 
-
                 if (Clipboard.ContainsText())
                 {
                     rawText = Clipboard.GetText(TextDataFormat.Text);
-
                     if (rawText.Length > 1)
                     {
                         //  unify all line breaks to \r
                         rawText = rawText.Replace("\r\n", "\r").Replace("\n", "\r");
-
                         //  create an array of lines
                         rowText = rawText.Split('\r');
-
                         grdAccount.Rows.Clear();
                         for (int i = 0; i < rowText.Length; i++)
                         {
                             string row = rowText[i];
                             string[] rowSplit = row.Split('|');
-                            //grdAccount.Rows.Add(i + 1, rowSplit[0], rowSplit[1], "", "", "");
-                            lstAccountInfor.Add(new AccountInfor()
+                            // duplicate check
+                            List<AccountInfor> duplicateList = lstAccountInfor.FindAll(
+                                delegate (AccountInfor acc)
+                                {
+                                    return acc.Username.Equals(rowSplit[0]);
+                                });
+                            if (duplicateList.Count > 0)
                             {
-                                Username = rowSplit[0],
-                                Password = rowSplit[1]
-                            });
+                                continue;
+                            }
+                            if (rowSplit.Length == 3)
+                            {
+                                lstAccountInfor.Add(new AccountInfor()
+                                {
+                                    Username = rowSplit[0],
+                                    Password = rowSplit[1],
+                                    AccessToken = rowSplit[2]
+                                });
+                            }
+                            else if (rowSplit.Length == 2)
+                            {
+                                //grdAccount.Rows.Add(i + 1, rowSplit[0], rowSplit[1], "", "", "");
+                                lstAccountInfor.Add(new AccountInfor()
+                                {
+                                    Username = rowSplit[0],
+                                    Password = rowSplit[1],
+                                    AccessToken = ""
+                                });
+                            }
                         }
                     }
                 }
@@ -117,61 +130,273 @@ namespace BVH.TDS
             }
         }
 
+        private void AddToken(Object sender, System.EventArgs e)
+        {
+            try
+            {
+                string rawText;
+                string[] rowText;
+
+                if (Clipboard.ContainsText())
+                {
+                    rawText = Clipboard.GetText(TextDataFormat.Text);
+                    if (rawText.Length > 1)
+                    {
+                        //  unify all line breaks to \r
+                        rawText = rawText.Replace("\r\n", "\r").Replace("\n", "\r");
+                        //  create an array of lines
+                        rowText = rawText.Split('\r');
+                        grdAccount.Rows.Clear();
+                        for (int i = 0; i < rowText.Length; i++)
+                        {
+                            // duplicate check
+                            List<AccountInfor> duplicateList = lstAccountInfor.FindAll(
+                                delegate (AccountInfor acc)
+                                {
+                                    return acc.AccessToken.Equals(rowText[i]);
+                                });
+                            if (duplicateList.Count == 0)
+                            {
+                                lstAccountInfor.Add(new AccountInfor()
+                                {
+                                    Username = "",
+                                    Password = "",
+                                    AccessToken = rowText[i]
+                                });
+                            }
+                        }
+                    }
+                }
+                ReloadGrid();
+                SaveFile();
+            }
+            catch (Exception)
+            {
+                MessageBox.Show("Clipboard không đúng định dạng!");
+            }
+        }
+
+        // copy id | pass
+        private void CopyAccount(Object sender, System.EventArgs e)
+        {
+            if (grdAccount.SelectedRows.Count > 0)
+            {
+                string rawText = "";
+                int count = 0;
+                List<KeyValuePair<int, string>> listAcc = new List<KeyValuePair<int, string>>();
+                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                {
+                    count++;
+                    var row = (AccountInfor)selectedRow.DataBoundItem;
+                    listAcc.Add(new KeyValuePair<int, string>(selectedRow.Index, row.Username + "|" + row.Password));
+                }
+                // sort by index
+                var listAcc2 = listAcc.OrderBy(o => o.Key).ToList();
+                for (int i = 0; i < listAcc2.Count; i++)
+                {
+                    rawText += listAcc2[i].Value;
+                    rawText += i < listAcc2.Count - 1 ? "\n" : "";
+                }
+                Clipboard.SetText(rawText);
+            }
+        }
+        // copy id | pass | token
+        private void CopyAccount2(Object sender, System.EventArgs e)
+        {
+            if (grdAccount.SelectedRows.Count > 0)
+            {
+                string rawText = "";
+                int count = 0;
+                List<KeyValuePair<int, string>> listAcc = new List<KeyValuePair<int, string>>();
+                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                {
+                    count++;
+                    var row = (AccountInfor)selectedRow.DataBoundItem;
+                    listAcc.Add(new KeyValuePair<int, string>(selectedRow.Index, row.Username + "|" + row.Password + "|" + row.AccessToken));
+                }
+                // sort by index
+                var listAcc2 = listAcc.OrderBy(o => o.Key).ToList();
+                for (int i = 0; i < listAcc2.Count; i++)
+                {
+                    rawText += listAcc2[i].Value;
+                    rawText += i < listAcc2.Count - 1 ? "\n" : "";
+                }
+                Clipboard.SetText(rawText);
+            }
+        }
+        private void TangXu(Object sender, System.EventArgs e)
+        {
+            string userNhanXu = txtUserNhanXu.Text;
+            int soXuTang = (int)numSoXuTang.Value;
+            int soXuTang2 = (int)(soXuTang * 1.1);
+            if (grdAccount.SelectedRows.Count > 1)
+            {
+                MessageBox.Show("Chỉ tặng xu trên từng acc một lần");
+            }
+            else if (grdAccount.SelectedRows.Count == 1 && userNhanXu.Length > 0 && soXuTang >= 1000000)
+            {
+                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                {
+                    var row = (AccountInfor)selectedRow.DataBoundItem;
+                    if (row.Coin < soXuTang2)
+                    {
+                        MessageBox.Show("Thiếu xu để tặng (Xu + 10% thuế): " + (soXuTang2 - row.Coin));
+                    }
+                    else if (row.Username.Length == 0 || row.Password.Length == 0)
+                    {
+                        MessageBox.Show("Cần có tài khoản, mật khẩu để tặng xu");
+                    }
+                    else
+                    {
+                        DialogResult result1 = MessageBox.Show("Bạn có chắc chắn tặng " + soXuTang + " xu cho " + userNhanXu + " không?",
+                                   "Xác nhận tặng xu",
+                                   MessageBoxButtons.YesNo);
+                        if (result1 == DialogResult.Yes)
+                        {
+                            var task = TangXu(row, userNhanXu, soXuTang + "");
+                            task.Start();
+                        }
+                    }
+                    ReloadGrid();
+                    SaveFile();
+                }
+            }
+        }
+
         private void RemoveAccount(Object sender, System.EventArgs e)
         {
-            foreach (DataGridViewRow row in grdAccount.SelectedRows)
+            if (grdAccount.SelectedRows.Count > 0)
             {
-                lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
-                grdAccount.Rows.RemoveAt(row.Index);
+                foreach (DataGridViewRow row in grdAccount.SelectedRows)
+                {
+                    lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
+                    grdAccount.Rows.RemoveAt(row.Index);
+                }
+                LoadTotalCoin();
+                SaveFile();
+                LoadGridInfor();
             }
-            LoadTotalCoin();
-            SaveFile();
-            LoadGridInfor();
         }
 
         #region User Event Handler
         private async void btnGetToken_Click(object sender, EventArgs e)
         {
-            if (lstAccountInfor.Count > 0)
+            semaphore = new SemaphoreSlim((int)numLuong.Value);
+            try
             {
-                var lstTask = new List<Task>();
-                foreach (var row in lstAccountInfor)
+                // to do: get by selected row, not all
+                if (grdAccount.SelectedRows.Count > 0)
                 {
-                    row.State = "Đang đợi lấy token";
-                    var task = GetToken(row);
-                    lstTask.Add(task);
+                    var lstTask = new List<Task>();
+                    foreach (DataGridViewRow sltRow in grdAccount.SelectedRows)
+                    {
+                        var row = (AccountInfor)sltRow.DataBoundItem;
+                        if (row.Username.Length < 1 || row.Password.Length < 1)
+                        {
+                            row.State = "Tài khoản, mật khẩu trống";
+                            continue;
+                        }
+                        await semaphore.WaitAsync();
+                        row.State = "Đang đợi lấy token";
+                        var task = GetToken(row);
+                        lstTask.Add(task);
+                        task.Start();
+                    }
+                    ReloadGrid();
+                    await Task.WhenAll(lstTask.ToArray());
+
+                    ReloadGrid();
+                    SaveFile();
+                    MessageBox.Show("Hoàn thành");
                 }
-                ReloadGrid();
-
-                lstTask.ForEach(_ => _.Start());
-                await Task.WhenAll(lstTask.ToArray());
-
-                ReloadGrid();
-                SaveFile();
-                MessageBox.Show("Hoàn thành");
+                else if (lstAccountInfor.Count > 0)
+                {
+                    var lstTask = new List<Task>();
+                    foreach (var row in lstAccountInfor)
+                    {
+                        if (row.Username.Length < 1 || row.Password.Length < 1)
+                        {
+                            row.State = "Tài khoản, mật khẩu trống";
+                            continue;
+                        }
+                        await semaphore.WaitAsync();
+                        row.State = "Đang đợi lấy token";
+                        var task = GetToken(row);
+                        lstTask.Add(task);
+                        task.Start();
+                    }
+                    ReloadGrid();
+                    await Task.WhenAll(lstTask.ToArray());
+                    ReloadGrid();
+                    SaveFile();
+                    MessageBox.Show("Hoàn thành");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                semaphore.Release(40);
             }
         }
 
         private async void btnGetCoin_Click(object sender, EventArgs e)
         {
-            if (lstAccountInfor.Count > 0)
+            semaphore = new SemaphoreSlim((int)numLuong.Value);
+            try
             {
-                var lstTask = new List<Task>();
-                foreach (var row in lstAccountInfor)
+                // to do: get by selected row, not all
+                if (grdAccount.SelectedRows.Count > 0)
                 {
-                    row.State = "Đang đợi lấy xu";
-                    lstTask.Add(GetCoin(row));
+                    var lstTask = new List<Task>();
+                    foreach (DataGridViewRow sltRow in grdAccount.SelectedRows)
+                    {
+                        await semaphore.WaitAsync();
+                        var row = (AccountInfor)sltRow.DataBoundItem;
+                        bool emptId = row.Username.Length < 1 || row.Password.Length < 1;
+                        row.State = "Đang đợi lấy xu";
+                        var task = emptId ? GetCoin(row) : GetCoin2(row);
+                        lstTask.Add(task);
+                        task.Start();
+                    }
+                    ReloadGrid();
+                    await Task.WhenAll(lstTask.ToArray());
+                    ReloadGrid();
+                    LoadTotalCoin();
+                    SaveFile();
+                    MessageBox.Show("Hoàn thành");
                 }
+                else if (lstAccountInfor.Count > 0)
+                {
+                    var lstTask = new List<Task>();
+                    foreach (var row in lstAccountInfor)
+                    {
+                        await semaphore.WaitAsync();
+                        bool emptId = row.Username.Length < 1 || row.Password.Length < 1;
+                        row.State = "Đang đợi lấy xu";
+                        var task = emptId ? GetCoin(row) : GetCoin2(row);
+                        lstTask.Add(task);
+                        task.Start();
+                    }
 
-                ReloadGrid();
+                    ReloadGrid();
+                    await Task.WhenAll(lstTask.ToArray());
 
-                lstTask.ForEach(_ => _.Start());
-                await Task.WhenAll(lstTask.ToArray());
-
-                ReloadGrid();
-                LoadTotalCoin();
-                SaveFile();
-                MessageBox.Show("Hoàn thành");
+                    ReloadGrid();
+                    LoadTotalCoin();
+                    SaveFile();
+                    MessageBox.Show("Hoàn thành");
+                }
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                semaphore.Release((int)numLuong.Value);
             }
         }
 
@@ -179,22 +404,40 @@ namespace BVH.TDS
         {
             if (grdAccount.SelectedRows.Count > 0)
             {
-                var lstTask = new List<Task>();
-                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                semaphore = new SemaphoreSlim((int)numLuong.Value);
+                try
                 {
-                    var row = (AccountInfor)selectedRow.DataBoundItem;
-                    row.State = "Đang đợi đổi mật khẩu";
-
-                    var task = ChangePassword(row);
-                    lstTask.Add(task);
+                    var lstTask = new List<Task>();
+                    foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                    {
+                        var row = (AccountInfor)selectedRow.DataBoundItem;
+                        if (row.Username.Length > 0 && row.Password.Length > 0)
+                        {
+                            await semaphore.WaitAsync();
+                            row.State = "Đang đợi đổi mật khẩu";
+                            var task = ChangePassword(row);
+                            lstTask.Add(task);
+                            task.Start();
+                            Thread.Sleep(60);
+                        }
+                        else
+                        {
+                            row.State = "Tài khoản hoặc mật khẩu trống";
+                        }
+                    }
+                    ReloadGrid();
+                    await Task.WhenAll(lstTask.ToArray());
+                    ReloadGrid();
+                    SaveFile();
                 }
-                ReloadGrid();
-
-                lstTask.ForEach(_ => _.Start());
-                await Task.WhenAll(lstTask.ToArray());
-
-                ReloadGrid();
-                SaveFile();
+                catch (Exception ex)
+                {
+                    throw ex;
+                }
+                finally
+                {
+                    semaphore.Release((int)numLuong.Value);
+                }
             }
             else
             {
@@ -237,12 +480,18 @@ namespace BVH.TDS
                 {
                     row.State = $"Lỗi: {ex.Message}!";
                 }
+                finally
+                {
+                    semaphore.Release();
+                }
             });
         }
 
+        // Get coin by token
         private Task GetCoin(AccountInfor row)
         {
-            return new Task(() => {
+            return new Task(() =>
+            {
                 try
                 {
                     if (String.IsNullOrEmpty(row.AccessToken))
@@ -272,6 +521,63 @@ namespace BVH.TDS
                 {
                     row.State = $"Có lỗi xảy ra: {ex.Message}!";
                 }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+        }
+
+        // Get coin by Id Pass
+        private Task GetCoin2(AccountInfor row)
+        {
+            return new Task(() =>
+            {
+                try
+                {
+                    if (String.IsNullOrEmpty(row.AccessToken))
+                    {
+                        row.State = "Chưa lấy token!";
+                    }
+                    else
+                    {
+                        var tdsProxy = new TDSProxy();
+                        var getCoinResponse = tdsProxy.GetCoin2(row).Result;
+                        if (getCoinResponse == null || String.IsNullOrEmpty(getCoinResponse.xu))
+                        {
+                            throw new Exception($"getCoinResponse error: {getCoinResponse}");
+                        }
+
+                        row.Coin = String.IsNullOrEmpty(getCoinResponse.xu) ? 0 : int.Parse(getCoinResponse.xu);
+                        row.State = "Thành công!";
+                    }
+                }
+                catch (Exception ex)
+                {
+                    row.State = $"Có lỗi xảy ra: {ex.Message}!";
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+        }
+
+        private Task TangXu(AccountInfor row, string userNhan, string soXu)
+        {
+            return new Task(() =>
+            {
+                try
+                {
+                    var tdsProxy = new TDSProxy();
+                    tdsProxy.Login(row).Wait();
+                    var tangXuResponse = tdsProxy.TangXu(row, userNhan, soXu).Result;
+                    row.State = "Tặng xu thành công";
+                }
+                catch (Exception ex)
+                {
+                    row.State = $"Lỗi khi tặng xu: {ex.Message}!";
+                }
             });
         }
 
@@ -283,9 +589,9 @@ namespace BVH.TDS
                 {
                     var tdsProxy = new TDSProxy();
                     tdsProxy.Login(row).Wait();
-                    var newPass = Utilities.RandomString(6);
+                    var newPass = Utilities.RandomString(16);
                     var changePasswordResponse = tdsProxy.ChangePassword(row, newPass).Result;
-                    if(changePasswordResponse != "0")
+                    if (changePasswordResponse != "0")
                     {
                         throw new Exception($"changePasswordResponse: {changePasswordResponse}");
                     }
@@ -296,6 +602,10 @@ namespace BVH.TDS
                 catch (Exception ex)
                 {
                     row.State = $"Lỗi khi đổi mk: {ex.Message}!";
+                }
+                finally
+                {
+                    semaphore.Release();
                 }
             });
         }
@@ -397,7 +707,7 @@ namespace BVH.TDS
         {
             return String.Format(new CultureInfo("vi-VN"), "{0:N0}", value);
         }
-        
+
         #endregion
     }
 }

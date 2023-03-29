@@ -12,7 +12,7 @@ namespace BVH.TDS
         private static Random rand = new Random();
         public static string RandomString(int length)
         {
-            const string pool = "abcdefghijklmnopqrstuvwxyz0123456789";
+            const string pool = "abcdefghijklmnopqrstuvwxyz0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
             var builder = new StringBuilder();
 
             for (var i = 0; i < length; i++)

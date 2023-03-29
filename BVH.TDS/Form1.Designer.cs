@@ -221,7 +221,7 @@
             this.numLuong.Size = new System.Drawing.Size(54, 20);
             this.numLuong.TabIndex = 12;
             this.numLuong.Value = new decimal(new int[] {
-            40,
+            20,
             0,
             0,
             0});

@@ -267,14 +267,20 @@ namespace BVH.TDS
         {
             if (grdAccount.SelectedRows.Count > 0)
             {
-                foreach (DataGridViewRow row in grdAccount.SelectedRows)
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa " + grdAccount.SelectedRows.Count + " dòng đã chọn không?",
+                       "Xác nhận xóa dòng",
+                       MessageBoxButtons.YesNo);
+                if (result1 == DialogResult.Yes)
                 {
-                    lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
-                    grdAccount.Rows.RemoveAt(row.Index);
+                    foreach (DataGridViewRow row in grdAccount.SelectedRows)
+                    {
+                        lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
+                        grdAccount.Rows.RemoveAt(row.Index);
+                    }
+                    LoadTotalCoin();
+                    SaveFile();
+                    LoadGridInfor();
                 }
-                LoadTotalCoin();
-                SaveFile();
-                LoadGridInfor();
             }
         }
 
@@ -402,41 +408,48 @@ namespace BVH.TDS
 
         private async void ChangePasswordMenuItem_Click(object sender, EventArgs e)
         {
+
             if (grdAccount.SelectedRows.Count > 0)
             {
-                semaphore = new SemaphoreSlim((int)numLuong.Value);
-                try
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn đổi mật khẩu của " + grdAccount.SelectedRows.Count + " dòng đã chọn không?",
+                       "Xác nhận đổi mật khẩu",
+                       MessageBoxButtons.YesNo);
+                if (result1 == DialogResult.Yes)
                 {
-                    var lstTask = new List<Task>();
-                    foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                    semaphore = new SemaphoreSlim((int)numLuong.Value);
+                    try
                     {
-                        var row = (AccountInfor)selectedRow.DataBoundItem;
-                        if (row.Username.Length > 0 && row.Password.Length > 0)
+                        var lstTask = new List<Task>();
+                        foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
                         {
-                            await semaphore.WaitAsync();
-                            row.State = "Đang đợi đổi mật khẩu";
-                            var task = ChangePassword(row);
-                            lstTask.Add(task);
-                            task.Start();
-                            Thread.Sleep(60);
+                            var row = (AccountInfor)selectedRow.DataBoundItem;
+                            if (row.Username.Length > 0 && row.Password.Length > 0)
+                            {
+                                await semaphore.WaitAsync();
+                                row.State = "Đang đợi đổi mật khẩu";
+                                var task = ChangePassword(row);
+                                lstTask.Add(task);
+                                task.Start();
+                                Thread.Sleep(60);
+                            }
+                            else
+                            {
+                                row.State = "Tài khoản hoặc mật khẩu trống";
+                            }
                         }
-                        else
-                        {
-                            row.State = "Tài khoản hoặc mật khẩu trống";
-                        }
+                        ReloadGrid();
+                        await Task.WhenAll(lstTask.ToArray());
+                        ReloadGrid();
+                        SaveFile();
                     }
-                    ReloadGrid();
-                    await Task.WhenAll(lstTask.ToArray());
-                    ReloadGrid();
-                    SaveFile();
-                }
-                catch (Exception ex)
-                {
-                    throw ex;
-                }
-                finally
-                {
-                    semaphore.Release((int)numLuong.Value);
+                    catch (Exception ex)
+                    {
+                        throw ex;
+                    }
+                    finally
+                    {
+                        semaphore.Release((int)numLuong.Value);
+                    }
                 }
             }
             else
@@ -449,8 +462,9 @@ namespace BVH.TDS
         {
             if (e.KeyCode == Keys.Delete)
             {
-                RemoveAccount(null, null);
+                RemoveAccount(sender, e);
             }
+            LoadFile();
         }
         #endregion
 

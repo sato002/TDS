@@ -61,7 +61,7 @@ namespace BVH.TDS
                 m.MenuItems[1].Enabled = hasRowSelected;
                 m.MenuItems[2].Enabled = hasRowSelected;
                 m.MenuItems[4].Enabled = hasRowSelected;
-                m.MenuItems[5].Enabled = hasRowSelected && txtUserNhanXu.Text.Length > 0 && numSoXuTang.Value >= 1000000;
+                m.MenuItems[5].Enabled = hasRowSelected && txtUserNhanXu.Text.Length > 0 && (numSoXuTang.Value >= 1000000 || this.checkBox1.Checked);
                 m.MenuItems[6].Enabled = hasRowSelected;
 
                 m.Show(grdAccount, new Point(e.X, e.Y));
@@ -224,41 +224,64 @@ namespace BVH.TDS
                 Clipboard.SetText(rawText);
             }
         }
-        private void TangXu(Object sender, System.EventArgs e)
+        private async void TangXu(Object sender, System.EventArgs e)
         {
+            semaphore = new SemaphoreSlim((int)numLuong.Value);
             string userNhanXu = txtUserNhanXu.Text;
             int soXuTang = (int)numSoXuTang.Value;
             int soXuTang2 = (int)(soXuTang * 1.1);
-            if (grdAccount.SelectedRows.Count > 1)
+            if (grdAccount.SelectedRows.Count > 0 && userNhanXu.Length > 0 && (soXuTang >= 1000000 || this.checkBox1.Checked))
             {
-                MessageBox.Show("Chỉ tặng xu trên từng acc một lần");
-            }
-            else if (grdAccount.SelectedRows.Count == 1 && userNhanXu.Length > 0 && soXuTang >= 1000000)
-            {
-                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn tặng" + (this.checkBox1.Checked ? " TẤC CẢ" : "") + " xu của "
+                    + grdAccount.SelectedRows.Count + " dòng đã chọn cho " + userNhanXu + " không?",
+                           "Xác nhận tặng xu",
+                           MessageBoxButtons.YesNo);
+                if (result1 == DialogResult.Yes)
                 {
-                    var row = (AccountInfor)selectedRow.DataBoundItem;
-                    if (row.Coin < soXuTang2)
+                    var lstTask = new List<Task>();
+                    foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
                     {
-                        MessageBox.Show("Thiếu xu để tặng (Xu + 10% thuế): " + (soXuTang2 - row.Coin));
-                    }
-                    else if (row.Username.Length == 0 || row.Password.Length == 0)
-                    {
-                        MessageBox.Show("Cần có tài khoản, mật khẩu để tặng xu");
-                    }
-                    else
-                    {
-                        DialogResult result1 = MessageBox.Show("Bạn có chắc chắn tặng " + soXuTang + " xu cho " + userNhanXu + " không?",
-                                   "Xác nhận tặng xu",
-                                   MessageBoxButtons.YesNo);
-                        if (result1 == DialogResult.Yes)
+                        var row = (AccountInfor)selectedRow.DataBoundItem;
+                        // min 1.100.000
+                        if (row.Coin < 1100000 && this.checkBox1.Checked)
                         {
+                            row.State = "Thiếu xu để tặng (tối thiểu 1.100.000 xu)";
+                        }
+                        else if (row.Coin < soXuTang2 && !this.checkBox1.Checked)
+                        {
+                            row.State = "Thiếu xu để tặng (Xu + 10% thuế): " + (soXuTang2 - row.Coin);
+                        }
+                        else if (row.Username.Length == 0 || row.Password.Length == 0)
+                        {
+                            row.State = "Cần có tài khoản, mật khẩu để tặng xu";
+                        }
+                        else
+                        {
+                            await semaphore.WaitAsync();
+                            row.State = "Đang đăng nhập vào tài khoản...";
+                            if (this.checkBox1.Checked)
+                            {
+                                // max 5.000.000
+                                if (row.Coin >= 5000000)
+                                {
+                                    soXuTang = 5000000;
+                                }
+                                else
+                                {
+                                    soXuTang = (int)Math.Floor(row.Coin / 1.1);
+                                }
+                            }
                             var task = TangXu(row, userNhanXu, soXuTang + "");
+                            lstTask.Add(task);
                             task.Start();
                         }
                     }
                     ReloadGrid();
+                    await Task.WhenAll(lstTask.ToArray());
+
+                    ReloadGrid();
                     SaveFile();
+                    MessageBox.Show("Hoàn thành tặng xu, vui lòng bấm check xu để cập nhật lại số xu.");
                 }
             }
         }
@@ -313,7 +336,7 @@ namespace BVH.TDS
 
                     ReloadGrid();
                     SaveFile();
-                    MessageBox.Show("Hoàn thành");
+                    MessageBox.Show("Hoàn thành lấy token của " + grdAccount.SelectedRows.Count + " dòng đã chọn.");
                 }
                 else if (lstAccountInfor.Count > 0)
                 {
@@ -335,7 +358,7 @@ namespace BVH.TDS
                     await Task.WhenAll(lstTask.ToArray());
                     ReloadGrid();
                     SaveFile();
-                    MessageBox.Show("Hoàn thành");
+                    MessageBox.Show("Hoàn thành lấy token của " + lstAccountInfor.Count + " dòng");
                 }
             }
             catch (Exception ex)
@@ -353,7 +376,6 @@ namespace BVH.TDS
             semaphore = new SemaphoreSlim((int)numLuong.Value);
             try
             {
-                // to do: get by selected row, not all
                 if (grdAccount.SelectedRows.Count > 0)
                 {
                     var lstTask = new List<Task>();
@@ -372,7 +394,7 @@ namespace BVH.TDS
                     ReloadGrid();
                     LoadTotalCoin();
                     SaveFile();
-                    MessageBox.Show("Hoàn thành");
+                    MessageBox.Show("Hoàn thành check xu của " + grdAccount.SelectedRows.Count + " dòng đã chọn.");
                 }
                 else if (lstAccountInfor.Count > 0)
                 {
@@ -393,7 +415,7 @@ namespace BVH.TDS
                     ReloadGrid();
                     LoadTotalCoin();
                     SaveFile();
-                    MessageBox.Show("Hoàn thành");
+                    MessageBox.Show("Hoàn thành check xu của " + lstAccountInfor.Count + " dòng.");
                 }
             }
             catch (Exception ex)
@@ -441,6 +463,7 @@ namespace BVH.TDS
                         await Task.WhenAll(lstTask.ToArray());
                         ReloadGrid();
                         SaveFile();
+                        MessageBox.Show("Hoàn thành đổi mật khẩu của " + grdAccount.SelectedRows.Count + " dòng đã chọn.");
                     }
                     catch (Exception ex)
                     {
@@ -463,8 +486,8 @@ namespace BVH.TDS
             if (e.KeyCode == Keys.Delete)
             {
                 RemoveAccount(sender, e);
+                LoadFile();
             }
-            LoadFile();
         }
         #endregion
 
@@ -591,6 +614,10 @@ namespace BVH.TDS
                 catch (Exception ex)
                 {
                     row.State = $"Lỗi khi tặng xu: {ex.Message}!";
+                }
+                finally
+                {
+                    semaphore.Release();
                 }
             });
         }
@@ -723,5 +750,17 @@ namespace BVH.TDS
         }
 
         #endregion
+
+        private void checkBox1_CheckedChanged(object sender, EventArgs e)
+        {
+            if (checkBox1.Checked)
+            {
+                this.numSoXuTang.Enabled = false;
+            }
+            else
+            {
+                this.numSoXuTang.Enabled = true;
+            }
+        }
     }
 }

@@ -40,6 +40,7 @@
             this.txtUserNhanXu = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.numSoXuTang = new System.Windows.Forms.NumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
             this.numLuong = new System.Windows.Forms.NumericUpDown();
@@ -152,7 +153,7 @@
             // 
             this.txtUserNhanXu.Location = new System.Drawing.Point(82, 18);
             this.txtUserNhanXu.Name = "txtUserNhanXu";
-            this.txtUserNhanXu.Size = new System.Drawing.Size(103, 20);
+            this.txtUserNhanXu.Size = new System.Drawing.Size(115, 20);
             this.txtUserNhanXu.TabIndex = 9;
             // 
             // label4
@@ -166,16 +167,28 @@
             // 
             // groupBox1
             // 
+            this.groupBox1.Controls.Add(this.checkBox1);
             this.groupBox1.Controls.Add(this.numSoXuTang);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.label4);
             this.groupBox1.Controls.Add(this.txtUserNhanXu);
             this.groupBox1.Location = new System.Drawing.Point(19, 11);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(197, 83);
+            this.groupBox1.Size = new System.Drawing.Size(224, 83);
             this.groupBox1.TabIndex = 11;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Tặng xu";
+            // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Location = new System.Drawing.Point(170, 44);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(51, 17);
+            this.checkBox1.TabIndex = 13;
+            this.checkBox1.Text = "All xu";
+            this.checkBox1.UseVisualStyleBackColor = true;
+            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // numSoXuTang
             // 
@@ -191,7 +204,7 @@
             0,
             0});
             this.numSoXuTang.Name = "numSoXuTang";
-            this.numSoXuTang.Size = new System.Drawing.Size(103, 20);
+            this.numSoXuTang.Size = new System.Drawing.Size(82, 20);
             this.numSoXuTang.TabIndex = 12;
             this.numSoXuTang.ThousandsSeparator = true;
             // 
@@ -284,6 +297,7 @@
         private System.Windows.Forms.NumericUpDown numSoXuTang;
         private System.Windows.Forms.NumericUpDown numLuong;
         private System.Windows.Forms.Label label6;
+        private System.Windows.Forms.CheckBox checkBox1;
     }
 }
 

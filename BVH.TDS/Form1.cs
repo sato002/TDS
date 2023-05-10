@@ -377,47 +377,46 @@ namespace BVH.TDS
             semaphore = new SemaphoreSlim((int)numLuong.Value);
             try
             {
-                if (grdAccount.SelectedRows.Count > 0)
+                //if (grdAccount.SelectedRows.Count > 0)
+                //{
+                //    var lstTask = new List<Task>();
+                //    foreach (DataGridViewRow sltRow in grdAccount.SelectedRows)
+                //    {
+                //        await semaphore.WaitAsync();
+                //        var row = (AccountInfor)sltRow.DataBoundItem;
+                //        bool emptId = row.Username.Length < 1 || row.Password.Length < 1;
+                //        row.State = "Đang đợi lấy xu";
+                //        var task = emptId ? GetCoin(row) : GetCoin2(row);
+                //        lstTask.Add(task);
+                //        task.Start();
+                //    }
+                //    ReloadGrid();
+                //    await Task.WhenAll(lstTask.ToArray());
+                //    ReloadGrid();
+                //    LoadTotalCoin();
+                //    SaveFile();
+                //    MessageBox.Show("Hoàn thành check xu của " + grdAccount.SelectedRows.Count + " dòng đã chọn.");
+                //}
+                //else if (lstAccountInfor.Count > 0)
+                //{
+                var lstTask = new List<Task>();
+                foreach (var row in lstAccountInfor)
                 {
-                    var lstTask = new List<Task>();
-                    foreach (DataGridViewRow sltRow in grdAccount.SelectedRows)
-                    {
-                        await semaphore.WaitAsync();
-                        var row = (AccountInfor)sltRow.DataBoundItem;
-                        bool emptId = row.Username.Length < 1 || row.Password.Length < 1;
-                        row.State = "Đang đợi lấy xu";
-                        var task = emptId ? GetCoin(row) : GetCoin2(row);
-                        lstTask.Add(task);
-                        task.Start();
-                    }
-                    ReloadGrid();
-                    await Task.WhenAll(lstTask.ToArray());
-                    ReloadGrid();
-                    LoadTotalCoin();
-                    SaveFile();
-                    MessageBox.Show("Hoàn thành check xu của " + grdAccount.SelectedRows.Count + " dòng đã chọn.");
+                    await semaphore.WaitAsync();
+                    //bool emptId = row.Username.Length < 1 || row.Password.Length < 1;
+                    row.State = "Đang đợi lấy xu";
+                    //var task = emptId ? GetCoin(row) : GetCoin2(row);
+                    var task = GetCoin2(row);
+                    lstTask.Add(task);
+                    task.Start();
                 }
-                else if (lstAccountInfor.Count > 0)
-                {
-                    var lstTask = new List<Task>();
-                    foreach (var row in lstAccountInfor)
-                    {
-                        await semaphore.WaitAsync();
-                        bool emptId = row.Username.Length < 1 || row.Password.Length < 1;
-                        row.State = "Đang đợi lấy xu";
-                        var task = emptId ? GetCoin(row) : GetCoin2(row);
-                        lstTask.Add(task);
-                        task.Start();
-                    }
-
-                    ReloadGrid();
-                    await Task.WhenAll(lstTask.ToArray());
-
-                    ReloadGrid();
-                    LoadTotalCoin();
-                    SaveFile();
-                    MessageBox.Show("Hoàn thành check xu của " + lstAccountInfor.Count + " dòng.");
-                }
+                ReloadGrid();
+                await Task.WhenAll(lstTask.ToArray());
+                ReloadGrid();
+                LoadTotalCoin();
+                SaveFile();
+                MessageBox.Show("Hoàn thành check xu của " + lstAccountInfor.Count + " dòng.");
+                //}
             }
             catch (Exception ex)
             {
@@ -525,47 +524,47 @@ namespace BVH.TDS
             });
         }
 
-        // Get coin by token
-        private Task GetCoin(AccountInfor row)
-        {
-            return new Task(() =>
-            {
-                try
-                {
-                    if (String.IsNullOrEmpty(row.AccessToken))
-                    {
-                        row.State = "Chưa lấy token!";
-                    }
-                    else
-                    {
-                        var tdsProxy = new TDSProxy();
-                        var getCoinResponse = tdsProxy.GetCoin(row).Result;
-                        if (getCoinResponse == null || getCoinResponse.success != 200 || getCoinResponse.data == null)
-                        {
-                            throw new Exception($"getCoinResponse error: {getCoinResponse}");
-                        }
+        //// Get coin by token
+        //private Task GetCoin(AccountInfor row)
+        //{
+        //    return new Task(() =>
+        //    {
+        //        try
+        //        {
+        //            if (String.IsNullOrEmpty(row.AccessToken))
+        //            {
+        //                row.State = "Chưa lấy token!";
+        //            }
+        //            else
+        //            {
+        //                var tdsProxy = new TDSProxy();
+        //                var getCoinResponse = tdsProxy.GetCoin(row).Result;
+        //                if (getCoinResponse == null || getCoinResponse.success != 200 || getCoinResponse.data == null)
+        //                {
+        //                    throw new Exception($"getCoinResponse error: {getCoinResponse}");
+        //                }
 
-                        var data = getCoinResponse.data;
-                        if (String.IsNullOrEmpty(data.xu))
-                        {
-                            throw new Exception($"getCoinResponse xu error: {data.error}");
-                        }
+        //                var data = getCoinResponse.data;
+        //                if (String.IsNullOrEmpty(data.xu))
+        //                {
+        //                    throw new Exception($"getCoinResponse xu error: {data.error}");
+        //                }
 
-                        row.Coin = String.IsNullOrEmpty(data.xu) ? 0 : int.Parse(data.xu);
-                        row.CoinDie = String.IsNullOrEmpty(data.xudie) ? 0 : int.Parse(data.xudie);
-                        row.State = "Thành công!";
-                    }
-                }
-                catch (Exception ex)
-                {
-                    row.State = $"Có lỗi xảy ra: {ex.Message}!";
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            });
-        }
+        //                row.Coin = String.IsNullOrEmpty(data.xu) ? 0 : int.Parse(data.xu);
+        //                row.CoinDie = String.IsNullOrEmpty(data.xudie) ? 0 : int.Parse(data.xudie);
+        //                row.State = "Thành công!";
+        //            }
+        //        }
+        //        catch (Exception ex)
+        //        {
+        //            row.State = $"Có lỗi xảy ra: {ex.Message}!";
+        //        }
+        //        finally
+        //        {
+        //            semaphore.Release();
+        //        }
+        //    });
+        //}
 
         // Get coin by Id Pass
         private Task GetCoin2(AccountInfor row)
@@ -574,9 +573,9 @@ namespace BVH.TDS
             {
                 try
                 {
-                    if (String.IsNullOrEmpty(row.AccessToken))
+                    if (String.IsNullOrEmpty(row.Username) || String.IsNullOrEmpty(row.Password))
                     {
-                        row.State = "Chưa lấy token!";
+                        row.State = "Tài khoản hoặc mật khẩu trống!";
                     }
                     else
                     {
@@ -659,14 +658,21 @@ namespace BVH.TDS
             {
                 try
                 {
-                    var tdsProxy = new TDSProxy();
-                    var nhanXuResponse = tdsProxy.NhanXuTim(row).Result;
-                    if (nhanXuResponse == null || nhanXuResponse.success != 200 || nhanXuResponse.data == null)
+                    if (String.IsNullOrEmpty(row.AccessToken))
                     {
-                        throw new Exception($"getCoinResponse error: {nhanXuResponse}");
+                        row.State = "Chưa lấy token!";
                     }
-                    var data = nhanXuResponse.data;
-                    row.State = "Nhận xu thành công: " + data.msg;
+                    else
+                    {
+                        var tdsProxy = new TDSProxy();
+                        var nhanXuResponse = tdsProxy.NhanXuTim(row).Result;
+                        if (nhanXuResponse == null || nhanXuResponse.success != 200 || nhanXuResponse.data == null)
+                        {
+                            throw new Exception($"getCoinResponse error: {nhanXuResponse}");
+                        }
+                        var data = nhanXuResponse.data;
+                        row.State = "Nhận xu thành công: " + data.msg;
+                    }
                 }
                 catch (Exception ex)
                 {

@@ -14,6 +14,7 @@ namespace BVH.TDS
         QuickLink = 3,
         TikUsername = 4,
         Coin = 5,
-        State = 6
+        State = 6,
+        CoinDie = 7,
     }
 }

@@ -45,6 +45,7 @@
             this.label5 = new System.Windows.Forms.Label();
             this.numLuong = new System.Windows.Forms.NumericUpDown();
             this.label6 = new System.Windows.Forms.Label();
+            this.btnNhanXuTim = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.grdAccount)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numSoXuTang)).BeginInit();
@@ -248,11 +249,22 @@
             this.label6.TabIndex = 13;
             this.label6.Text = "Luồng";
             // 
+            // btnNhanXuTim
+            // 
+            this.btnNhanXuTim.Location = new System.Drawing.Point(258, 12);
+            this.btnNhanXuTim.Name = "btnNhanXuTim";
+            this.btnNhanXuTim.Size = new System.Drawing.Size(77, 23);
+            this.btnNhanXuTim.TabIndex = 14;
+            this.btnNhanXuTim.Text = "Nhận Xu Tim";
+            this.btnNhanXuTim.UseVisualStyleBackColor = true;
+            this.btnNhanXuTim.Click += new System.EventHandler(this.btnNhanXuTim_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(844, 563);
+            this.Controls.Add(this.btnNhanXuTim);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.numLuong);
             this.Controls.Add(this.groupBox1);
@@ -298,6 +310,7 @@
         private System.Windows.Forms.NumericUpDown numLuong;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.Button btnNhanXuTim;
     }
 }
 

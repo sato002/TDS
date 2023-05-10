@@ -144,6 +144,17 @@ namespace BVH.TDS
             result.EnsureSuccessStatusCode();
             return await result.Content.ReadAsStringAsync();
         }
+        public async Task<TDSResponse<TDSNhanXu>> NhanXuTim(AccountInfor row)
+        {
+            var result = await _client.GetAsync($"/api/coin/?type=TIKTOK_LIKE&id=TIKTOK_LIKE_API&access_token={row.AccessToken}");
+            result.EnsureSuccessStatusCode();
+            var content = await result.Content.ReadAsStringAsync();
+            if (String.IsNullOrEmpty(content))
+            {
+                throw new Exception("content null");
+            }
+            return JsonConvert.DeserializeObject< TDSResponse<TDSNhanXu>>(content);
+        }
         public async Task<string> TangXu(AccountInfor row, string userNhanXu, string soXu)
         {
             var payload = new FormUrlEncodedContent(new[] {

@@ -26,5 +26,6 @@ namespace BVH.TDS
         public string TikUsername { get; set; }
         public int Coin { get ; set; }
         public string State { get; set; }
+        public int CoinDie { get; set; }
     }
 }

@@ -37,11 +37,12 @@ namespace BVH.TDS
             grdAccount.AllowUserToAddRows = false;
             grdAccount.Columns[(int)EnumColumnOrder.Username].Width = 100;
             grdAccount.Columns[(int)EnumColumnOrder.Password].Width = 100;
-            grdAccount.Columns[(int)EnumColumnOrder.AccessToken].Width = 160;
+            grdAccount.Columns[(int)EnumColumnOrder.AccessToken].Width = 100;
             grdAccount.Columns[(int)EnumColumnOrder.QuickLink].Width = 60;
-            grdAccount.Columns[(int)EnumColumnOrder.TikUsername].Width = 100;
+            grdAccount.Columns[(int)EnumColumnOrder.TikUsername].Width = 80;
             grdAccount.Columns[(int)EnumColumnOrder.Coin].Width = 80;
             grdAccount.Columns[(int)EnumColumnOrder.State].Width = 197;
+            grdAccount.Columns[(int)EnumColumnOrder.CoinDie].Width = 80;
         }
 
         private void grdAccount_MouseClick(object sender, MouseEventArgs e)
@@ -367,7 +368,7 @@ namespace BVH.TDS
             }
             finally
             {
-                semaphore.Release(40);
+                semaphore.Release();
             }
         }
 
@@ -424,7 +425,7 @@ namespace BVH.TDS
             }
             finally
             {
-                semaphore.Release((int)numLuong.Value);
+                semaphore.Release();
             }
         }
 
@@ -471,7 +472,7 @@ namespace BVH.TDS
                     }
                     finally
                     {
-                        semaphore.Release((int)numLuong.Value);
+                        semaphore.Release();
                     }
                 }
             }
@@ -551,6 +552,7 @@ namespace BVH.TDS
                         }
 
                         row.Coin = String.IsNullOrEmpty(data.xu) ? 0 : int.Parse(data.xu);
+                        row.CoinDie = String.IsNullOrEmpty(data.xudie) ? 0 : int.Parse(data.xudie);
                         row.State = "Thành công!";
                     }
                 }
@@ -586,6 +588,7 @@ namespace BVH.TDS
                         }
 
                         row.Coin = String.IsNullOrEmpty(getCoinResponse.xu) ? 0 : int.Parse(getCoinResponse.xu);
+                        row.CoinDie = String.IsNullOrEmpty(getCoinResponse.xudie) ? 0 : int.Parse(getCoinResponse.xudie);
                         row.State = "Thành công!";
                     }
                 }
@@ -643,6 +646,31 @@ namespace BVH.TDS
                 catch (Exception ex)
                 {
                     row.State = $"Lỗi khi đổi mk: {ex.Message}!";
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
+        }
+        private Task NhanXuTim(AccountInfor row)
+        {
+            return new Task(() =>
+            {
+                try
+                {
+                    var tdsProxy = new TDSProxy();
+                    var nhanXuResponse = tdsProxy.NhanXuTim(row).Result;
+                    if (nhanXuResponse == null || nhanXuResponse.success != 200 || nhanXuResponse.data == null)
+                    {
+                        throw new Exception($"getCoinResponse error: {nhanXuResponse}");
+                    }
+                    var data = nhanXuResponse.data;
+                    row.State = "Nhận xu thành công: " + data.msg;
+                }
+                catch (Exception ex)
+                {
+                    row.State = $"Lỗi khi nhận xu: {ex.Message}!";
                 }
                 finally
                 {
@@ -761,6 +789,37 @@ namespace BVH.TDS
             {
                 this.numSoXuTang.Enabled = true;
             }
+        }
+
+        private async void btnNhanXuTim_Click(object sender, EventArgs e)
+        {
+            semaphore = new SemaphoreSlim((int)numLuong.Value);
+            try
+            {
+                var lstTask = new List<Task>();
+                foreach (var row in lstAccountInfor)
+                {
+                    await semaphore.WaitAsync();
+                    row.State = "Đang đợi nhận xu";
+                    var task = NhanXuTim(row);
+                    lstTask.Add(task);
+                    task.Start();
+                }
+                ReloadGrid();
+                await Task.WhenAll(lstTask.ToArray());
+                ReloadGrid();
+                SaveFile();
+                MessageBox.Show("Hoàn thành nhận xu của " + lstAccountInfor.Count + " dòng");
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+
         }
     }
 }

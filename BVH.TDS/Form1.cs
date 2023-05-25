@@ -726,6 +726,22 @@ namespace BVH.TDS
                     }
                 }
             }
+            else if(e.ColumnIndex == (int)EnumColumnOrder.Coin && e.RowIndex >= 0)
+            {
+                int coinValue = Int32.Parse(grdAccount[e.ColumnIndex, e.RowIndex].Value + "");
+                if(coinValue >= 1100000)
+                {
+                    e.CellStyle.ForeColor = Color.DarkGreen;
+                }
+            }
+            else if (e.ColumnIndex == (int)EnumColumnOrder.CoinDie && e.RowIndex >= 0)
+            {
+                int coinValue = Int32.Parse(grdAccount[e.ColumnIndex, e.RowIndex].Value + "");
+                if (coinValue > 0)
+                {
+                    e.CellStyle.ForeColor = Color.OrangeRed;
+                }
+            }
         }
         #endregion
 
@@ -750,12 +766,18 @@ namespace BVH.TDS
         {
             if (lstAccountInfor != null && lstAccountInfor.Count > 0)
             {
-                var totalCoint = lstAccountInfor.Select(_ => _.Coin).Sum();
-                lbTotalCoin.Text = PrettyNumber(totalCoint);
+                var totalCoin = lstAccountInfor.Select(_ => _.Coin).Sum();
+                lbTotalCoin.Text = PrettyNumber(totalCoin);
+                var canSell = lstAccountInfor.Where(_ => _.Coin >= 1100000);
+                var totalCoinSell = canSell.Select(_ => _.Coin).Sum();
+                lbTotalCoinSell.Text = PrettyNumber(totalCoinSell);
+                lblCountCanSell.Text = canSell.ToList().Count.ToString();
             }
             else
             {
                 lbTotalCoin.Text = "0";
+                lbTotalCoinSell.Text = "0";
+                lblCountCanSell.Text = "0";
             }
         }
         private void LoadFile()

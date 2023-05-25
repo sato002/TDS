@@ -46,6 +46,9 @@
             this.numLuong = new System.Windows.Forms.NumericUpDown();
             this.label6 = new System.Windows.Forms.Label();
             this.btnNhanXuTim = new System.Windows.Forms.Button();
+            this.lbTotalCoinSell = new System.Windows.Forms.Label();
+            this.label7 = new System.Windows.Forms.Label();
+            this.lblCountCanSell = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.grdAccount)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numSoXuTang)).BeginInit();
@@ -69,7 +72,7 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Verdana", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(760, 12);
+            this.label1.Location = new System.Drawing.Point(561, 45);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(73, 18);
             this.label1.TabIndex = 2;
@@ -77,19 +80,19 @@
             // 
             // lbTotalCoin
             // 
-            this.lbTotalCoin.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbTotalCoin.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lbTotalCoin.ForeColor = System.Drawing.Color.Red;
-            this.lbTotalCoin.Location = new System.Drawing.Point(572, 40);
+            this.lbTotalCoin.Location = new System.Drawing.Point(640, 41);
             this.lbTotalCoin.Name = "lbTotalCoin";
             this.lbTotalCoin.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
-            this.lbTotalCoin.Size = new System.Drawing.Size(270, 29);
+            this.lbTotalCoin.Size = new System.Drawing.Size(202, 29);
             this.lbTotalCoin.TabIndex = 3;
             this.lbTotalCoin.Text = "0";
             // 
             // btnGetCoin
             // 
             this.btnGetCoin.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGetCoin.Location = new System.Drawing.Point(640, 6);
+            this.btnGetCoin.Location = new System.Drawing.Point(733, 6);
             this.btnGetCoin.Name = "btnGetCoin";
             this.btnGetCoin.Size = new System.Drawing.Size(104, 30);
             this.btnGetCoin.TabIndex = 4;
@@ -142,7 +145,7 @@
             // btnGetToken
             // 
             this.btnGetToken.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGetToken.Location = new System.Drawing.Point(524, 6);
+            this.btnGetToken.Location = new System.Drawing.Point(617, 6);
             this.btnGetToken.Name = "btnGetToken";
             this.btnGetToken.Size = new System.Drawing.Size(104, 30);
             this.btnGetToken.TabIndex = 1;
@@ -225,7 +228,7 @@
             0,
             0,
             0});
-            this.numLuong.Location = new System.Drawing.Point(453, 12);
+            this.numLuong.Location = new System.Drawing.Point(556, 12);
             this.numLuong.Minimum = new decimal(new int[] {
             10,
             0,
@@ -243,7 +246,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(413, 15);
+            this.label6.Location = new System.Drawing.Point(516, 15);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(37, 13);
             this.label6.TabIndex = 13;
@@ -259,11 +262,46 @@
             this.btnNhanXuTim.UseVisualStyleBackColor = true;
             this.btnNhanXuTim.Click += new System.EventHandler(this.btnNhanXuTim_Click);
             // 
+            // lbTotalCoinSell
+            // 
+            this.lbTotalCoinSell.Font = new System.Drawing.Font("Microsoft Sans Serif", 18F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbTotalCoinSell.ForeColor = System.Drawing.Color.ForestGreen;
+            this.lbTotalCoinSell.Location = new System.Drawing.Point(655, 69);
+            this.lbTotalCoinSell.Name = "lbTotalCoinSell";
+            this.lbTotalCoinSell.RightToLeft = System.Windows.Forms.RightToLeft.Yes;
+            this.lbTotalCoinSell.Size = new System.Drawing.Size(187, 29);
+            this.lbTotalCoinSell.TabIndex = 15;
+            this.lbTotalCoinSell.Text = "0";
+            // 
+            // label7
+            // 
+            this.label7.AutoSize = true;
+            this.label7.Font = new System.Drawing.Font("Verdana", 11.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label7.Location = new System.Drawing.Point(561, 76);
+            this.label7.Name = "label7";
+            this.label7.Size = new System.Drawing.Size(75, 18);
+            this.label7.TabIndex = 16;
+            this.label7.Text = "> 1.1M :";
+            // 
+            // lblCountCanSell
+            // 
+            this.lblCountCanSell.AutoSize = true;
+            this.lblCountCanSell.Font = new System.Drawing.Font("Microsoft Sans Serif", 14.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblCountCanSell.ForeColor = System.Drawing.Color.Green;
+            this.lblCountCanSell.Location = new System.Drawing.Point(634, 73);
+            this.lblCountCanSell.Name = "lblCountCanSell";
+            this.lblCountCanSell.Size = new System.Drawing.Size(20, 24);
+            this.lblCountCanSell.TabIndex = 17;
+            this.lblCountCanSell.Text = "0";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(844, 563);
+            this.Controls.Add(this.lblCountCanSell);
+            this.Controls.Add(this.label7);
+            this.Controls.Add(this.lbTotalCoinSell);
             this.Controls.Add(this.btnNhanXuTim);
             this.Controls.Add(this.label6);
             this.Controls.Add(this.numLuong);
@@ -311,6 +349,9 @@
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.CheckBox checkBox1;
         private System.Windows.Forms.Button btnNhanXuTim;
+        private System.Windows.Forms.Label lbTotalCoinSell;
+        private System.Windows.Forms.Label label7;
+        private System.Windows.Forms.Label lblCountCanSell;
     }
 }
 

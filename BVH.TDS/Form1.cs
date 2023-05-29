@@ -36,12 +36,12 @@ namespace BVH.TDS
             LoadFile();
             grdAccount.AllowUserToAddRows = false;
             grdAccount.Columns[(int)EnumColumnOrder.Username].Width = 100;
-            grdAccount.Columns[(int)EnumColumnOrder.Password].Width = 100;
-            grdAccount.Columns[(int)EnumColumnOrder.AccessToken].Width = 100;
+            grdAccount.Columns[(int)EnumColumnOrder.Password].Width = 90;
+            grdAccount.Columns[(int)EnumColumnOrder.AccessToken].Width = 90;
             grdAccount.Columns[(int)EnumColumnOrder.QuickLink].Width = 60;
             grdAccount.Columns[(int)EnumColumnOrder.TikUsername].Width = 80;
             grdAccount.Columns[(int)EnumColumnOrder.Coin].Width = 80;
-            grdAccount.Columns[(int)EnumColumnOrder.State].Width = 197;
+            grdAccount.Columns[(int)EnumColumnOrder.State].Width = 200;
             grdAccount.Columns[(int)EnumColumnOrder.CoinDie].Width = 80;
         }
 
@@ -52,18 +52,27 @@ namespace BVH.TDS
                 bool hasRowSelected = grdAccount.SelectedRows.Count > 0;
                 ContextMenu m = new ContextMenu();
                 m.MenuItems.Add(new MenuItem("Thêm acc (Tài khoản|Mật khẩu|Token)", AddAccountFromClibboard));
+                m.MenuItems.Add("-");
                 m.MenuItems.Add(new MenuItem("Copy acc (Tài khoản|Mật khẩu)", CopyAccount));
                 m.MenuItems.Add(new MenuItem("Copy acc (Tài khoản|Mật khẩu|Token)", CopyAccount2));
-                m.MenuItems.Add(new MenuItem("Thêm acc (Token) check xu", AddToken));
+                m.MenuItems.Add(new MenuItem("Copy cột xu", CopyCoin));
+                m.MenuItems.Add("-");
                 m.MenuItems.Add(new MenuItem("Đổi mật khẩu (sinh random)", ChangePasswordMenuItem_Click));
+                m.MenuItems.Add("-");
                 m.MenuItems.Add(new MenuItem("Tặng xu", TangXu));
-                m.MenuItems.Add(new MenuItem("Xóa", RemoveAccount));
+                m.MenuItems.Add("-");
+                m.MenuItems.Add(new MenuItem("Xóa dòng đã chọn", RemoveAccount));
+                m.MenuItems.Add(new MenuItem("Xóa dòng đã chọn (dưới 1.1M xu)", RemoveAccountSmall));
+                m.MenuItems.Add(new MenuItem("Xóa dòng đã chọn (trên 1.1M xu)", RemoveAccountBig));
 
-                m.MenuItems[1].Enabled = hasRowSelected;
                 m.MenuItems[2].Enabled = hasRowSelected;
+                m.MenuItems[3].Enabled = hasRowSelected;
                 m.MenuItems[4].Enabled = hasRowSelected;
-                m.MenuItems[5].Enabled = hasRowSelected && txtUserNhanXu.Text.Length > 0 && (numSoXuTang.Value >= 1000000 || this.checkBox1.Checked);
                 m.MenuItems[6].Enabled = hasRowSelected;
+                m.MenuItems[8].Enabled = hasRowSelected && txtUserNhanXu.Text.Length > 0 && (numSoXuTang.Value >= 1000000 || this.checkBox1.Checked);
+                m.MenuItems[10].Enabled = hasRowSelected;
+                m.MenuItems[11].Enabled = hasRowSelected;
+                m.MenuItems[12].Enabled = hasRowSelected;
 
                 m.Show(grdAccount, new Point(e.X, e.Y));
             }
@@ -225,6 +234,31 @@ namespace BVH.TDS
                 Clipboard.SetText(rawText);
             }
         }
+
+        // copy coin
+        private void CopyCoin(Object sender, System.EventArgs e)
+        {
+            if (grdAccount.SelectedRows.Count > 0)
+            {
+                string rawText = "";
+                int count = 0;
+                List<KeyValuePair<int, string>> listAcc = new List<KeyValuePair<int, string>>();
+                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                {
+                    count++;
+                    var row = (AccountInfor)selectedRow.DataBoundItem;
+                    listAcc.Add(new KeyValuePair<int, string>(selectedRow.Index, row.Coin + ""));
+                }
+                // sort by index
+                var listAcc2 = listAcc.OrderBy(o => o.Key).ToList();
+                for (int i = 0; i < listAcc2.Count; i++)
+                {
+                    rawText += listAcc2[i].Value;
+                    rawText += i < listAcc2.Count - 1 ? "\n" : "";
+                }
+                Clipboard.SetText(rawText);
+            }
+        }
         private async void TangXu(Object sender, System.EventArgs e)
         {
             semaphore = new SemaphoreSlim((int)numLuong.Value);
@@ -296,14 +330,71 @@ namespace BVH.TDS
                        MessageBoxButtons.YesNo);
                 if (result1 == DialogResult.Yes)
                 {
+                    int count = 0;
                     foreach (DataGridViewRow row in grdAccount.SelectedRows)
                     {
                         lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
                         grdAccount.Rows.RemoveAt(row.Index);
+                        count++;
                     }
                     LoadTotalCoin();
                     SaveFile();
                     LoadGridInfor();
+                    MessageBox.Show("Đã xóa " + count + " dòng.");
+                }
+            }
+        }
+        private void RemoveAccountSmall(Object sender, System.EventArgs e)
+        {
+            if (grdAccount.SelectedRows.Count > 0)
+            {
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa tất cả acc DƯỚI 1.1M xu trong " + grdAccount.SelectedRows.Count + " dòng đã chọn không?",
+                       "Xác nhận xóa dòng",
+                       MessageBoxButtons.YesNo);
+                if (result1 == DialogResult.Yes)
+                {
+                    int count = 0;
+                    foreach (DataGridViewRow row in grdAccount.SelectedRows)
+                    {
+                        var rowData = (AccountInfor)row.DataBoundItem;
+                        if (rowData.Coin < 1100000)
+                        {
+                            lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
+                            grdAccount.Rows.RemoveAt(row.Index);
+                            count++;
+                        }
+                    }
+                    LoadTotalCoin();
+                    SaveFile();
+                    LoadGridInfor();
+                    MessageBox.Show("Đã xóa " + count + " dòng.");
+                }
+            }
+        }
+        private void RemoveAccountBig(Object sender, System.EventArgs e)
+        {
+            if (grdAccount.SelectedRows.Count > 0)
+            {
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa tất cả acc TRÊN 1.1M xu trong " + grdAccount.SelectedRows.Count + " dòng đã chọn không?",
+                       "Xác nhận xóa dòng",
+                       MessageBoxButtons.YesNo);
+                if (result1 == DialogResult.Yes)
+                {
+                    int count = 0;
+                    foreach (DataGridViewRow row in grdAccount.SelectedRows)
+                    {
+                        var rowData = (AccountInfor)row.DataBoundItem;
+                        if (rowData.Coin >= 1100000)
+                        {
+                            lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
+                            grdAccount.Rows.RemoveAt(row.Index);
+                            count++;
+                        }
+                    }
+                    LoadTotalCoin();
+                    SaveFile();
+                    LoadGridInfor();
+                    MessageBox.Show("Đã xóa " + count + " dòng.");
                 }
             }
         }
@@ -377,35 +468,11 @@ namespace BVH.TDS
             semaphore = new SemaphoreSlim((int)numLuong.Value);
             try
             {
-                //if (grdAccount.SelectedRows.Count > 0)
-                //{
-                //    var lstTask = new List<Task>();
-                //    foreach (DataGridViewRow sltRow in grdAccount.SelectedRows)
-                //    {
-                //        await semaphore.WaitAsync();
-                //        var row = (AccountInfor)sltRow.DataBoundItem;
-                //        bool emptId = row.Username.Length < 1 || row.Password.Length < 1;
-                //        row.State = "Đang đợi lấy xu";
-                //        var task = emptId ? GetCoin(row) : GetCoin2(row);
-                //        lstTask.Add(task);
-                //        task.Start();
-                //    }
-                //    ReloadGrid();
-                //    await Task.WhenAll(lstTask.ToArray());
-                //    ReloadGrid();
-                //    LoadTotalCoin();
-                //    SaveFile();
-                //    MessageBox.Show("Hoàn thành check xu của " + grdAccount.SelectedRows.Count + " dòng đã chọn.");
-                //}
-                //else if (lstAccountInfor.Count > 0)
-                //{
                 var lstTask = new List<Task>();
                 foreach (var row in lstAccountInfor)
                 {
                     await semaphore.WaitAsync();
-                    //bool emptId = row.Username.Length < 1 || row.Password.Length < 1;
                     row.State = "Đang đợi lấy xu";
-                    //var task = emptId ? GetCoin(row) : GetCoin2(row);
                     var task = GetCoin2(row);
                     lstTask.Add(task);
                     task.Start();
@@ -523,48 +590,6 @@ namespace BVH.TDS
                 }
             });
         }
-
-        //// Get coin by token
-        //private Task GetCoin(AccountInfor row)
-        //{
-        //    return new Task(() =>
-        //    {
-        //        try
-        //        {
-        //            if (String.IsNullOrEmpty(row.AccessToken))
-        //            {
-        //                row.State = "Chưa lấy token!";
-        //            }
-        //            else
-        //            {
-        //                var tdsProxy = new TDSProxy();
-        //                var getCoinResponse = tdsProxy.GetCoin(row).Result;
-        //                if (getCoinResponse == null || getCoinResponse.success != 200 || getCoinResponse.data == null)
-        //                {
-        //                    throw new Exception($"getCoinResponse error: {getCoinResponse}");
-        //                }
-
-        //                var data = getCoinResponse.data;
-        //                if (String.IsNullOrEmpty(data.xu))
-        //                {
-        //                    throw new Exception($"getCoinResponse xu error: {data.error}");
-        //                }
-
-        //                row.Coin = String.IsNullOrEmpty(data.xu) ? 0 : int.Parse(data.xu);
-        //                row.CoinDie = String.IsNullOrEmpty(data.xudie) ? 0 : int.Parse(data.xudie);
-        //                row.State = "Thành công!";
-        //            }
-        //        }
-        //        catch (Exception ex)
-        //        {
-        //            row.State = $"Có lỗi xảy ra: {ex.Message}!";
-        //        }
-        //        finally
-        //        {
-        //            semaphore.Release();
-        //        }
-        //    });
-        //}
 
         // Get coin by Id Pass
         private Task GetCoin2(AccountInfor row)
@@ -726,12 +751,12 @@ namespace BVH.TDS
                     }
                 }
             }
-            else if(e.ColumnIndex == (int)EnumColumnOrder.Coin && e.RowIndex >= 0)
+            else if (e.ColumnIndex == (int)EnumColumnOrder.Coin && e.RowIndex >= 0)
             {
                 int coinValue = Int32.Parse(grdAccount[e.ColumnIndex, e.RowIndex].Value + "");
-                if(coinValue >= 1100000)
+                if (coinValue >= 1100000)
                 {
-                    e.CellStyle.ForeColor = Color.DarkGreen;
+                    e.CellStyle.BackColor = Color.Khaki;
                 }
             }
             else if (e.ColumnIndex == (int)EnumColumnOrder.CoinDie && e.RowIndex >= 0)
@@ -739,7 +764,7 @@ namespace BVH.TDS
                 int coinValue = Int32.Parse(grdAccount[e.ColumnIndex, e.RowIndex].Value + "");
                 if (coinValue > 0)
                 {
-                    e.CellStyle.ForeColor = Color.OrangeRed;
+                    e.CellStyle.BackColor = Color.OrangeRed;
                 }
             }
         }

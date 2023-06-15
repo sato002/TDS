@@ -1,11 +1,4 @@
-﻿using Newtonsoft.Json;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace BVH.TDS
+﻿namespace BVH.TDS
 {
     public class AccountInfor
     {
@@ -15,7 +8,7 @@ namespace BVH.TDS
         public string QuickLink {
             get
             {
-                string value = String.Empty;
+                string value = "";
                 if (!string.IsNullOrEmpty(AccessToken))
                 {
                     value = $"https://traodoisub.com/api/autoclick/?access_token={AccessToken}&type=tiktok_follow";

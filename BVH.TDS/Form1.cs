@@ -11,47 +11,53 @@ using BVHAU.TDS;
 using System.IO;
 using System.Globalization;
 using System.Threading;
+using static BVH.TDS.Utilities;
 
 namespace BVH.TDS
 {
     public partial class Form1 : Form
     {
-
         private static string ACCOUNT_FILE_PATH = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "accounts.json");
-
+        private static string CHECKXU_FILE_PATH = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "checkxu.txt");
+        private int totalCoin = 0;
+        private DateTime lastDate;
+        private int lastCoin;
         private SemaphoreSlim semaphore;
-
-        private List<AccountInfor> lstAccountInfor;
-
+        private List<AccountInfor> listAccountInfor;
         public Form1()
         {
+            CreateFile(ACCOUNT_FILE_PATH, "[]");
+            CreateFile(CHECKXU_FILE_PATH, DateTime.Now + "\n0");
             InitializeComponent();
             InitializeDataGridView();
             LoadTotalCoin();
+            DateTime.TryParse(File.ReadAllText(CHECKXU_FILE_PATH).Split('\n')[0], out lastDate);
+            lastCoin = Int32.Parse(File.ReadAllText(CHECKXU_FILE_PATH).Split('\n')[1]);
+            UpdateXu();
         }
 
         private void InitializeDataGridView()
         {
-            lstAccountInfor = new List<AccountInfor>();
+            listAccountInfor = new List<AccountInfor>();
             LoadFile();
-            grdAccount.AllowUserToAddRows = false;
-            grdAccount.Columns[(int)EnumColumnOrder.Username].Width = 100;
-            grdAccount.Columns[(int)EnumColumnOrder.Password].Width = 90;
-            grdAccount.Columns[(int)EnumColumnOrder.AccessToken].Width = 90;
-            grdAccount.Columns[(int)EnumColumnOrder.QuickLink].Width = 60;
-            grdAccount.Columns[(int)EnumColumnOrder.TikUsername].Width = 80;
-            grdAccount.Columns[(int)EnumColumnOrder.Coin].Width = 80;
-            grdAccount.Columns[(int)EnumColumnOrder.State].Width = 200;
-            grdAccount.Columns[(int)EnumColumnOrder.CoinDie].Width = 80;
+            gridAccInfor.AllowUserToAddRows = false;
+            gridAccInfor.Columns[(int)EnumColumnOrder.Username].Width = 100;
+            gridAccInfor.Columns[(int)EnumColumnOrder.Password].Width = 90;
+            gridAccInfor.Columns[(int)EnumColumnOrder.AccessToken].Width = 90;
+            gridAccInfor.Columns[(int)EnumColumnOrder.QuickLink].Width = 60;
+            gridAccInfor.Columns[(int)EnumColumnOrder.TikUsername].Width = 80;
+            gridAccInfor.Columns[(int)EnumColumnOrder.Coin].Width = 80;
+            gridAccInfor.Columns[(int)EnumColumnOrder.State].Width = 200;
+            gridAccInfor.Columns[(int)EnumColumnOrder.CoinDie].Width = 80;
         }
 
         private void grdAccount_MouseClick(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
             {
-                bool hasRowSelected = grdAccount.SelectedRows.Count > 0;
+                bool hasRowSelected = gridAccInfor.SelectedRows.Count > 0;
                 ContextMenu m = new ContextMenu();
-                m.MenuItems.Add(new MenuItem("Thêm acc (Tài khoản|Mật khẩu|Token)", AddAccountFromClibboard));
+                m.MenuItems.Add(new MenuItem("Thêm acc (Tài khoản|Mật khẩu|Token)", AddAccountFromClipboard));
                 m.MenuItems.Add("-");
                 m.MenuItems.Add(new MenuItem("Copy acc (Tài khoản|Mật khẩu)", CopyAccount));
                 m.MenuItems.Add(new MenuItem("Copy acc (Tài khoản|Mật khẩu|Token)", CopyAccount2));
@@ -69,22 +75,21 @@ namespace BVH.TDS
                 m.MenuItems[3].Enabled = hasRowSelected;
                 m.MenuItems[4].Enabled = hasRowSelected;
                 m.MenuItems[6].Enabled = hasRowSelected;
-                m.MenuItems[8].Enabled = hasRowSelected && txtUserNhanXu.Text.Length > 0 && (numSoXuTang.Value >= 1000000 || this.checkBox1.Checked);
+                m.MenuItems[8].Enabled = hasRowSelected && txtUserNhanXu.Text.Length > 0 && (numSoXuTang.Value >= 1000000 || this.ckbAllXu.Checked);
                 m.MenuItems[10].Enabled = hasRowSelected;
                 m.MenuItems[11].Enabled = hasRowSelected;
                 m.MenuItems[12].Enabled = hasRowSelected;
 
-                m.Show(grdAccount, new Point(e.X, e.Y));
+                m.Show(gridAccInfor, new Point(e.X, e.Y));
             }
         }
 
-        private void AddAccountFromClibboard(Object sender, System.EventArgs e)
+        private void AddAccountFromClipboard(Object sender, System.EventArgs e)
         {
             try
             {
                 string rawText;
                 string[] rowText;
-
                 if (Clipboard.ContainsText())
                 {
                     rawText = Clipboard.GetText(TextDataFormat.Text);
@@ -94,13 +99,13 @@ namespace BVH.TDS
                         rawText = rawText.Replace("\r\n", "\r").Replace("\n", "\r");
                         //  create an array of lines
                         rowText = rawText.Split('\r');
-                        grdAccount.Rows.Clear();
+                        gridAccInfor.Rows.Clear();
                         for (int i = 0; i < rowText.Length; i++)
                         {
                             string row = rowText[i];
                             string[] rowSplit = row.Split('|');
                             // duplicate check
-                            List<AccountInfor> duplicateList = lstAccountInfor.FindAll(
+                            List<AccountInfor> duplicateList = listAccountInfor.FindAll(
                                 delegate (AccountInfor acc)
                                 {
                                     return acc.Username.Equals(rowSplit[0]);
@@ -111,7 +116,7 @@ namespace BVH.TDS
                             }
                             if (rowSplit.Length == 3)
                             {
-                                lstAccountInfor.Add(new AccountInfor()
+                                listAccountInfor.Add(new AccountInfor()
                                 {
                                     Username = rowSplit[0],
                                     Password = rowSplit[1],
@@ -120,8 +125,7 @@ namespace BVH.TDS
                             }
                             else if (rowSplit.Length == 2)
                             {
-                                //grdAccount.Rows.Add(i + 1, rowSplit[0], rowSplit[1], "", "", "");
-                                lstAccountInfor.Add(new AccountInfor()
+                                listAccountInfor.Add(new AccountInfor()
                                 {
                                     Username = rowSplit[0],
                                     Password = rowSplit[1],
@@ -140,61 +144,15 @@ namespace BVH.TDS
             }
         }
 
-        private void AddToken(Object sender, System.EventArgs e)
-        {
-            try
-            {
-                string rawText;
-                string[] rowText;
-
-                if (Clipboard.ContainsText())
-                {
-                    rawText = Clipboard.GetText(TextDataFormat.Text);
-                    if (rawText.Length > 1)
-                    {
-                        //  unify all line breaks to \r
-                        rawText = rawText.Replace("\r\n", "\r").Replace("\n", "\r");
-                        //  create an array of lines
-                        rowText = rawText.Split('\r');
-                        grdAccount.Rows.Clear();
-                        for (int i = 0; i < rowText.Length; i++)
-                        {
-                            // duplicate check
-                            List<AccountInfor> duplicateList = lstAccountInfor.FindAll(
-                                delegate (AccountInfor acc)
-                                {
-                                    return acc.AccessToken.Equals(rowText[i]);
-                                });
-                            if (duplicateList.Count == 0)
-                            {
-                                lstAccountInfor.Add(new AccountInfor()
-                                {
-                                    Username = "",
-                                    Password = "",
-                                    AccessToken = rowText[i]
-                                });
-                            }
-                        }
-                    }
-                }
-                ReloadGrid();
-                SaveFile();
-            }
-            catch (Exception)
-            {
-                MessageBox.Show("Clipboard không đúng định dạng!");
-            }
-        }
-
         // copy id | pass
         private void CopyAccount(Object sender, System.EventArgs e)
         {
-            if (grdAccount.SelectedRows.Count > 0)
+            if (gridAccInfor.SelectedRows.Count > 0)
             {
                 string rawText = "";
                 int count = 0;
                 List<KeyValuePair<int, string>> listAcc = new List<KeyValuePair<int, string>>();
-                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                foreach (DataGridViewRow selectedRow in gridAccInfor.SelectedRows)
                 {
                     count++;
                     var row = (AccountInfor)selectedRow.DataBoundItem;
@@ -213,12 +171,12 @@ namespace BVH.TDS
         // copy id | pass | token
         private void CopyAccount2(Object sender, System.EventArgs e)
         {
-            if (grdAccount.SelectedRows.Count > 0)
+            if (gridAccInfor.SelectedRows.Count > 0)
             {
                 string rawText = "";
                 int count = 0;
                 List<KeyValuePair<int, string>> listAcc = new List<KeyValuePair<int, string>>();
-                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                foreach (DataGridViewRow selectedRow in gridAccInfor.SelectedRows)
                 {
                     count++;
                     var row = (AccountInfor)selectedRow.DataBoundItem;
@@ -238,12 +196,12 @@ namespace BVH.TDS
         // copy coin
         private void CopyCoin(Object sender, System.EventArgs e)
         {
-            if (grdAccount.SelectedRows.Count > 0)
+            if (gridAccInfor.SelectedRows.Count > 0)
             {
                 string rawText = "";
                 int count = 0;
                 List<KeyValuePair<int, string>> listAcc = new List<KeyValuePair<int, string>>();
-                foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                foreach (DataGridViewRow selectedRow in gridAccInfor.SelectedRows)
                 {
                     count++;
                     var row = (AccountInfor)selectedRow.DataBoundItem;
@@ -265,24 +223,24 @@ namespace BVH.TDS
             string userNhanXu = txtUserNhanXu.Text;
             int soXuTang = (int)numSoXuTang.Value;
             int soXuTang2 = (int)(soXuTang * 1.1);
-            if (grdAccount.SelectedRows.Count > 0 && userNhanXu.Length > 0 && (soXuTang >= 1000000 || this.checkBox1.Checked))
+            if (gridAccInfor.SelectedRows.Count > 0 && userNhanXu.Length > 0 && (soXuTang >= 1000000 || this.ckbAllXu.Checked))
             {
-                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn tặng" + (this.checkBox1.Checked ? " TẤC CẢ" : "") + " xu của "
-                    + grdAccount.SelectedRows.Count + " dòng đã chọn cho " + userNhanXu + " không?",
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn tặng" + (this.ckbAllXu.Checked ? " TẤC CẢ" : "") + " xu của "
+                    + gridAccInfor.SelectedRows.Count + " dòng đã chọn cho " + userNhanXu + " không?",
                            "Xác nhận tặng xu",
                            MessageBoxButtons.YesNo);
                 if (result1 == DialogResult.Yes)
                 {
                     var lstTask = new List<Task>();
-                    foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                    foreach (DataGridViewRow selectedRow in gridAccInfor.SelectedRows)
                     {
                         var row = (AccountInfor)selectedRow.DataBoundItem;
                         // min 1.100.000
-                        if (row.Coin < 1100000 && this.checkBox1.Checked)
+                        if (row.Coin < 1100000 && this.ckbAllXu.Checked)
                         {
                             row.State = "Thiếu xu để tặng (tối thiểu 1.100.000 xu)";
                         }
-                        else if (row.Coin < soXuTang2 && !this.checkBox1.Checked)
+                        else if (row.Coin < soXuTang2 && !this.ckbAllXu.Checked)
                         {
                             row.State = "Thiếu xu để tặng (Xu + 10% thuế): " + (soXuTang2 - row.Coin);
                         }
@@ -294,7 +252,7 @@ namespace BVH.TDS
                         {
                             await semaphore.WaitAsync();
                             row.State = "Đang đăng nhập vào tài khoản...";
-                            if (this.checkBox1.Checked)
+                            if (this.ckbAllXu.Checked)
                             {
                                 // max 5.000.000
                                 if (row.Coin >= 5000000)
@@ -311,9 +269,7 @@ namespace BVH.TDS
                             task.Start();
                         }
                     }
-                    ReloadGrid();
                     await Task.WhenAll(lstTask.ToArray());
-
                     ReloadGrid();
                     SaveFile();
                     MessageBox.Show("Hoàn thành tặng xu, vui lòng bấm check xu để cập nhật lại số xu.");
@@ -323,18 +279,18 @@ namespace BVH.TDS
 
         private void RemoveAccount(Object sender, System.EventArgs e)
         {
-            if (grdAccount.SelectedRows.Count > 0)
+            if (gridAccInfor.SelectedRows.Count > 0)
             {
-                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa " + grdAccount.SelectedRows.Count + " dòng đã chọn không?",
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa " + gridAccInfor.SelectedRows.Count + " dòng đã chọn không?",
                        "Xác nhận xóa dòng",
                        MessageBoxButtons.YesNo);
                 if (result1 == DialogResult.Yes)
                 {
                     int count = 0;
-                    foreach (DataGridViewRow row in grdAccount.SelectedRows)
+                    foreach (DataGridViewRow row in gridAccInfor.SelectedRows)
                     {
-                        lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
-                        grdAccount.Rows.RemoveAt(row.Index);
+                        listAccountInfor.Remove((AccountInfor)row.DataBoundItem);
+                        gridAccInfor.Rows.RemoveAt(row.Index);
                         count++;
                     }
                     LoadTotalCoin();
@@ -346,21 +302,21 @@ namespace BVH.TDS
         }
         private void RemoveAccountSmall(Object sender, System.EventArgs e)
         {
-            if (grdAccount.SelectedRows.Count > 0)
+            if (gridAccInfor.SelectedRows.Count > 0)
             {
-                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa tất cả acc DƯỚI 1.1M xu trong " + grdAccount.SelectedRows.Count + " dòng đã chọn không?",
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa tất cả acc DƯỚI 1.1M xu trong " + gridAccInfor.SelectedRows.Count + " dòng đã chọn không?",
                        "Xác nhận xóa dòng",
                        MessageBoxButtons.YesNo);
                 if (result1 == DialogResult.Yes)
                 {
                     int count = 0;
-                    foreach (DataGridViewRow row in grdAccount.SelectedRows)
+                    foreach (DataGridViewRow row in gridAccInfor.SelectedRows)
                     {
                         var rowData = (AccountInfor)row.DataBoundItem;
                         if (rowData.Coin < 1100000)
                         {
-                            lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
-                            grdAccount.Rows.RemoveAt(row.Index);
+                            listAccountInfor.Remove((AccountInfor)row.DataBoundItem);
+                            gridAccInfor.Rows.RemoveAt(row.Index);
                             count++;
                         }
                     }
@@ -373,21 +329,21 @@ namespace BVH.TDS
         }
         private void RemoveAccountBig(Object sender, System.EventArgs e)
         {
-            if (grdAccount.SelectedRows.Count > 0)
+            if (gridAccInfor.SelectedRows.Count > 0)
             {
-                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa tất cả acc TRÊN 1.1M xu trong " + grdAccount.SelectedRows.Count + " dòng đã chọn không?",
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn xóa tất cả acc TRÊN 1.1M xu trong " + gridAccInfor.SelectedRows.Count + " dòng đã chọn không?",
                        "Xác nhận xóa dòng",
                        MessageBoxButtons.YesNo);
                 if (result1 == DialogResult.Yes)
                 {
                     int count = 0;
-                    foreach (DataGridViewRow row in grdAccount.SelectedRows)
+                    foreach (DataGridViewRow row in gridAccInfor.SelectedRows)
                     {
                         var rowData = (AccountInfor)row.DataBoundItem;
                         if (rowData.Coin >= 1100000)
                         {
-                            lstAccountInfor.Remove((AccountInfor)row.DataBoundItem);
-                            grdAccount.Rows.RemoveAt(row.Index);
+                            listAccountInfor.Remove((AccountInfor)row.DataBoundItem);
+                            gridAccInfor.Rows.RemoveAt(row.Index);
                             count++;
                         }
                     }
@@ -400,58 +356,29 @@ namespace BVH.TDS
         }
 
         #region User Event Handler
-        private async void btnGetToken_Click(object sender, EventArgs e)
+        private async void btnGetCoin_Click(object sender, EventArgs e)
         {
             semaphore = new SemaphoreSlim((int)numLuong.Value);
             try
             {
-                // to do: get by selected row, not all
-                if (grdAccount.SelectedRows.Count > 0)
+                DateTime.TryParse(File.ReadAllText(CHECKXU_FILE_PATH).Split('\n')[0], out lastDate);
+                lastCoin = Int32.Parse(File.ReadAllText(CHECKXU_FILE_PATH).Split('\n')[1]);
+                var lstTask = new List<Task>();
+                foreach (var row in listAccountInfor)
                 {
-                    var lstTask = new List<Task>();
-                    foreach (DataGridViewRow sltRow in grdAccount.SelectedRows)
-                    {
-                        var row = (AccountInfor)sltRow.DataBoundItem;
-                        if (row.Username.Length < 1 || row.Password.Length < 1)
-                        {
-                            row.State = "Tài khoản, mật khẩu trống";
-                            continue;
-                        }
-                        await semaphore.WaitAsync();
-                        row.State = "Đang đợi lấy token";
-                        var task = GetToken(row);
-                        lstTask.Add(task);
-                        task.Start();
-                    }
-                    ReloadGrid();
-                    await Task.WhenAll(lstTask.ToArray());
-
-                    ReloadGrid();
-                    SaveFile();
-                    MessageBox.Show("Hoàn thành lấy token của " + grdAccount.SelectedRows.Count + " dòng đã chọn.");
+                    await semaphore.WaitAsync();
+                    row.State = "Đang đợi lấy xu";
+                    var task = GetAccInfor(row);
+                    lstTask.Add(task);
+                    task.Start();
                 }
-                else if (lstAccountInfor.Count > 0)
-                {
-                    var lstTask = new List<Task>();
-                    foreach (var row in lstAccountInfor)
-                    {
-                        if (row.Username.Length < 1 || row.Password.Length < 1)
-                        {
-                            row.State = "Tài khoản, mật khẩu trống";
-                            continue;
-                        }
-                        await semaphore.WaitAsync();
-                        row.State = "Đang đợi lấy token";
-                        var task = GetToken(row);
-                        lstTask.Add(task);
-                        task.Start();
-                    }
-                    ReloadGrid();
-                    await Task.WhenAll(lstTask.ToArray());
-                    ReloadGrid();
-                    SaveFile();
-                    MessageBox.Show("Hoàn thành lấy token của " + lstAccountInfor.Count + " dòng");
-                }
+                await Task.WhenAll(lstTask.ToArray());
+                ReloadGrid();
+                LoadTotalCoin();
+                File.WriteAllText(CHECKXU_FILE_PATH, DateTime.Now.ToString() + "\n" + totalCoin);
+                SaveFile();
+                MessageBox.Show("Hoàn thành check xu của " + listAccountInfor.Count + " dòng.\nTính từ lúc " + lbLastCheck.Text + ", " + lbDiffXu.Text);
+                UpdateXu();
             }
             catch (Exception ex)
             {
@@ -463,27 +390,24 @@ namespace BVH.TDS
             }
         }
 
-        private async void btnGetCoin_Click(object sender, EventArgs e)
+        private async void btnNhanXuTim_Click(object sender, EventArgs e)
         {
             semaphore = new SemaphoreSlim((int)numLuong.Value);
             try
             {
                 var lstTask = new List<Task>();
-                foreach (var row in lstAccountInfor)
+                foreach (var row in listAccountInfor)
                 {
                     await semaphore.WaitAsync();
-                    row.State = "Đang đợi lấy xu";
-                    var task = GetCoin2(row);
+                    row.State = "Đang đợi nhận xu";
+                    var task = NhanXuTim(row);
                     lstTask.Add(task);
                     task.Start();
                 }
-                ReloadGrid();
                 await Task.WhenAll(lstTask.ToArray());
                 ReloadGrid();
-                LoadTotalCoin();
                 SaveFile();
-                MessageBox.Show("Hoàn thành check xu của " + lstAccountInfor.Count + " dòng.");
-                //}
+                MessageBox.Show("Hoàn thành nhận xu của " + listAccountInfor.Count + " dòng");
             }
             catch (Exception ex)
             {
@@ -498,9 +422,9 @@ namespace BVH.TDS
         private async void ChangePasswordMenuItem_Click(object sender, EventArgs e)
         {
 
-            if (grdAccount.SelectedRows.Count > 0)
+            if (gridAccInfor.SelectedRows.Count > 0)
             {
-                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn đổi mật khẩu của " + grdAccount.SelectedRows.Count + " dòng đã chọn không?",
+                DialogResult result1 = MessageBox.Show("Bạn có chắc chắn muốn đổi mật khẩu của " + gridAccInfor.SelectedRows.Count + " dòng đã chọn không?",
                        "Xác nhận đổi mật khẩu",
                        MessageBoxButtons.YesNo);
                 if (result1 == DialogResult.Yes)
@@ -509,7 +433,7 @@ namespace BVH.TDS
                     try
                     {
                         var lstTask = new List<Task>();
-                        foreach (DataGridViewRow selectedRow in grdAccount.SelectedRows)
+                        foreach (DataGridViewRow selectedRow in gridAccInfor.SelectedRows)
                         {
                             var row = (AccountInfor)selectedRow.DataBoundItem;
                             if (row.Username.Length > 0 && row.Password.Length > 0)
@@ -526,11 +450,10 @@ namespace BVH.TDS
                                 row.State = "Tài khoản hoặc mật khẩu trống";
                             }
                         }
-                        ReloadGrid();
                         await Task.WhenAll(lstTask.ToArray());
                         ReloadGrid();
                         SaveFile();
-                        MessageBox.Show("Hoàn thành đổi mật khẩu của " + grdAccount.SelectedRows.Count + " dòng đã chọn.");
+                        MessageBox.Show("Hoàn thành đổi mật khẩu của " + gridAccInfor.SelectedRows.Count + " dòng đã chọn.");
                     }
                     catch (Exception ex)
                     {
@@ -559,40 +482,7 @@ namespace BVH.TDS
         #endregion
 
         #region TDS Task
-        private Task GetToken(AccountInfor row)
-        {
-            return new Task(() =>
-            {
-                try
-                {
-                    var tdsProxy = new TDSProxy();
-                    var getTokenResponse = tdsProxy.GetToken(row).Result;
-                    if (getTokenResponse == null)
-                    {
-                        throw new Exception("getTokenResponse null");
-                    }
-
-                    if (String.IsNullOrEmpty(getTokenResponse.access_token))
-                    {
-                        throw new Exception("access_token null");
-                    }
-
-                    row.AccessToken = getTokenResponse.access_token;
-                    row.State = "Thành công!";
-                }
-                catch (Exception ex)
-                {
-                    row.State = $"Lỗi: {ex.Message}!";
-                }
-                finally
-                {
-                    semaphore.Release();
-                }
-            });
-        }
-
-        // Get coin by Id Pass
-        private Task GetCoin2(AccountInfor row)
+        private Task GetAccInfor(AccountInfor row)
         {
             return new Task(() =>
             {
@@ -605,20 +495,16 @@ namespace BVH.TDS
                     else
                     {
                         var tdsProxy = new TDSProxy();
-                        var getCoinResponse = tdsProxy.GetCoin2(row).Result;
-                        if (getCoinResponse == null || String.IsNullOrEmpty(getCoinResponse.xu))
-                        {
-                            throw new Exception($"getCoinResponse error: {getCoinResponse}");
-                        }
-
-                        row.Coin = String.IsNullOrEmpty(getCoinResponse.xu) ? 0 : int.Parse(getCoinResponse.xu);
-                        row.CoinDie = String.IsNullOrEmpty(getCoinResponse.xudie) ? 0 : int.Parse(getCoinResponse.xudie);
+                        var res = tdsProxy.GetAccInfor(row).Result ?? throw new Exception("getTokenResponse null");
+                        row.AccessToken = String.IsNullOrEmpty(res.access_token) ? "" : res.access_token;
+                        row.Coin = String.IsNullOrEmpty(res.xu) ? 0 : int.Parse(res.xu);
+                        row.CoinDie = String.IsNullOrEmpty(res.xudie) ? 0 : int.Parse(res.xudie);
                         row.State = "Thành công!";
                     }
                 }
                 catch (Exception ex)
                 {
-                    row.State = $"Có lỗi xảy ra: {ex.Message}!";
+                    row.State = $"Lỗi: {ex.Message}!";
                 }
                 finally
                 {
@@ -657,13 +543,12 @@ namespace BVH.TDS
                 {
                     var tdsProxy = new TDSProxy();
                     tdsProxy.Login(row).Wait();
-                    var newPass = Utilities.RandomString(16);
+                    var newPass = RandomString(16);
                     var changePasswordResponse = tdsProxy.ChangePassword(row, newPass).Result;
                     if (changePasswordResponse != "0")
                     {
                         throw new Exception($"changePasswordResponse: {changePasswordResponse}");
                     }
-
                     row.Password = newPass;
                     row.State = "Đổi mật khẩu thành công";
                 }
@@ -717,27 +602,25 @@ namespace BVH.TDS
         {
             var grid = sender as DataGridView;
             var rowIdx = (e.RowIndex + 1).ToString();
-
             var centerFormat = new StringFormat()
             {
                 // right alignment might actually make more sense for numbers
                 Alignment = StringAlignment.Center,
                 LineAlignment = StringAlignment.Center
             };
-
             var headerBounds = new Rectangle(e.RowBounds.Left, e.RowBounds.Top, grid.RowHeadersWidth, e.RowBounds.Height);
             e.Graphics.DrawString(rowIdx, this.Font, SystemBrushes.ControlText, headerBounds, centerFormat);
         }
         private void grdAccount_SelectionChanged(object sender, EventArgs e)
         {
-            lbCountSelected.Text = grdAccount.SelectedRows.Count.ToString();
+            lbCountSelected.Text = gridAccInfor.SelectedRows.Count.ToString();
         }
         private void grdAccount_CellPainting(object sender, DataGridViewCellPaintingEventArgs e)
         {
             if (e.ColumnIndex == (int)EnumColumnOrder.State && e.RowIndex >= 0)
             {
                 e.CellStyle.ForeColor = Color.Black;
-                var stateValue = grdAccount[e.ColumnIndex, e.RowIndex].Value;
+                var stateValue = gridAccInfor[e.ColumnIndex, e.RowIndex].Value;
                 if (stateValue != null)
                 {
                     var state = stateValue.ToString();
@@ -753,7 +636,7 @@ namespace BVH.TDS
             }
             else if (e.ColumnIndex == (int)EnumColumnOrder.Coin && e.RowIndex >= 0)
             {
-                int coinValue = Int32.Parse(grdAccount[e.ColumnIndex, e.RowIndex].Value + "");
+                int coinValue = Int32.Parse(gridAccInfor[e.ColumnIndex, e.RowIndex].Value + "");
                 if (coinValue >= 1100000)
                 {
                     e.CellStyle.BackColor = Color.Khaki;
@@ -761,80 +644,16 @@ namespace BVH.TDS
             }
             else if (e.ColumnIndex == (int)EnumColumnOrder.CoinDie && e.RowIndex >= 0)
             {
-                int coinValue = Int32.Parse(grdAccount[e.ColumnIndex, e.RowIndex].Value + "");
+                int coinValue = Int32.Parse(gridAccInfor[e.ColumnIndex, e.RowIndex].Value + "");
                 if (coinValue > 0)
                 {
                     e.CellStyle.BackColor = Color.OrangeRed;
                 }
             }
         }
-        #endregion
-
-
-        #region Private method
-        private void ReloadGrid()
-        {
-            var bindingList = new SortableBindingList<AccountInfor>(lstAccountInfor);
-            var source = new BindingSource(bindingList, null);
-            grdAccount.DataSource = source;
-            grdAccount.Update();
-            grdAccount.Refresh();
-            LoadGridInfor();
-        }
-        private void LoadGridInfor()
-        {
-            lstAccountInfor = lstAccountInfor ?? new List<AccountInfor>();
-            lbCountAll.Text = lstAccountInfor.Count.ToString();
-            lbCountSelected.Text = grdAccount.SelectedRows.Count.ToString();
-        }
-        private void LoadTotalCoin()
-        {
-            if (lstAccountInfor != null && lstAccountInfor.Count > 0)
-            {
-                var totalCoin = lstAccountInfor.Select(_ => _.Coin).Sum();
-                lbTotalCoin.Text = PrettyNumber(totalCoin);
-                var canSell = lstAccountInfor.Where(_ => _.Coin >= 1100000);
-                var totalCoinSell = canSell.Select(_ => _.Coin).Sum();
-                lbTotalCoinSell.Text = PrettyNumber(totalCoinSell);
-                lblCountCanSell.Text = canSell.ToList().Count.ToString();
-            }
-            else
-            {
-                lbTotalCoin.Text = "0";
-                lbTotalCoinSell.Text = "0";
-                lblCountCanSell.Text = "0";
-            }
-        }
-        private void LoadFile()
-        {
-            if (System.IO.File.Exists(ACCOUNT_FILE_PATH))
-            {
-                var json = System.IO.File.ReadAllText(ACCOUNT_FILE_PATH);
-                if (!String.IsNullOrEmpty(json))
-                {
-                    lstAccountInfor = JsonConvert.DeserializeObject<List<AccountInfor>>(json);
-                    ReloadGrid();
-                }
-            }
-        }
-        private void SaveFile()
-        {
-            lstAccountInfor = lstAccountInfor ?? new List<AccountInfor>();
-            string json = JsonConvert.SerializeObject(lstAccountInfor);
-
-            //write string to file
-            System.IO.File.WriteAllText(ACCOUNT_FILE_PATH, json);
-        }
-        private string PrettyNumber(int value)
-        {
-            return String.Format(new CultureInfo("vi-VN"), "{0:N0}", value);
-        }
-
-        #endregion
-
         private void checkBox1_CheckedChanged(object sender, EventArgs e)
         {
-            if (checkBox1.Checked)
+            if (ckbAllXu.Checked)
             {
                 this.numSoXuTang.Enabled = false;
             }
@@ -843,36 +662,84 @@ namespace BVH.TDS
                 this.numSoXuTang.Enabled = true;
             }
         }
+        #endregion
 
-        private async void btnNhanXuTim_Click(object sender, EventArgs e)
+
+        #region Private method
+        private void ReloadGrid()
         {
-            semaphore = new SemaphoreSlim((int)numLuong.Value);
-            try
-            {
-                var lstTask = new List<Task>();
-                foreach (var row in lstAccountInfor)
-                {
-                    await semaphore.WaitAsync();
-                    row.State = "Đang đợi nhận xu";
-                    var task = NhanXuTim(row);
-                    lstTask.Add(task);
-                    task.Start();
-                }
-                ReloadGrid();
-                await Task.WhenAll(lstTask.ToArray());
-                ReloadGrid();
-                SaveFile();
-                MessageBox.Show("Hoàn thành nhận xu của " + lstAccountInfor.Count + " dòng");
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-
+            var bindingList = new SortableBindingList<AccountInfor>(listAccountInfor);
+            var source = new BindingSource(bindingList, null);
+            gridAccInfor.DataSource = source;
+            gridAccInfor.Update();
+            gridAccInfor.Refresh();
+            LoadGridInfor();
         }
+        private void LoadGridInfor()
+        {
+            listAccountInfor = listAccountInfor ?? new List<AccountInfor>();
+            lbCountAll.Text = listAccountInfor.Count.ToString();
+            lbCountSelected.Text = gridAccInfor.SelectedRows.Count.ToString();
+        }
+        private void LoadTotalCoin()
+        {
+            if (listAccountInfor != null && listAccountInfor.Count > 0)
+            {
+                totalCoin = listAccountInfor.Select(_ => _.Coin).Sum();
+                lbTotalCoin.Text = PrettyNumber(totalCoin);
+                var canSell = listAccountInfor.Where(_ => _.Coin >= 1100000);
+                var totalCoinSell = canSell.Select(_ => _.Coin).Sum();
+                lbTotalCoinSell.Text = PrettyNumber(totalCoinSell);
+                lblCountCanSell.Text = canSell.ToList().Count.ToString();
+            }
+            else
+            {
+                totalCoin = 0;
+                lbTotalCoin.Text = "0";
+                lbTotalCoinSell.Text = "0";
+                lblCountCanSell.Text = "0";
+            }
+        }
+        private void UpdateXu()
+        {
+            double diffMin = Math.Round((DateTime.Now - lastDate).TotalMinutes * 10) / 10;
+            lbLastCheck.Text = lastDate + " (" + Math.Floor(diffMin / 60) + "h:" + Math.Floor(diffMin % 60) + "m)";
+            int diffXu = totalCoin - lastCoin;
+            if (diffXu < 0)
+            {
+                lbDiffXu.ForeColor = Color.Red;
+                lbDiffXu.Text = "-" + PrettyNumber(diffXu) + " Xu";
+            }
+            else
+            {
+                lbDiffXu.ForeColor = Color.Green;
+                lbDiffXu.Text = "+" + PrettyNumber(diffXu) + " Xu";
+            }
+        }
+        private void LoadFile()
+        {
+            if (File.Exists(ACCOUNT_FILE_PATH))
+            {
+                var json = File.ReadAllText(ACCOUNT_FILE_PATH);
+                if (!String.IsNullOrEmpty(json))
+                {
+                    listAccountInfor = JsonConvert.DeserializeObject<List<AccountInfor>>(json);
+                    ReloadGrid();
+                }
+            }
+        }
+        private void SaveFile()
+        {
+            listAccountInfor = listAccountInfor ?? new List<AccountInfor>();
+            string json = JsonConvert.SerializeObject(listAccountInfor);
+
+            //write string to file
+            File.WriteAllText(ACCOUNT_FILE_PATH, json);
+        }
+        private string PrettyNumber(int value)
+        {
+            return String.Format(new CultureInfo("vi-VN"), "{0:N0}", value);
+        }
+        #endregion
     }
 }

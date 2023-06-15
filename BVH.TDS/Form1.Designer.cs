@@ -28,7 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
-            this.grdAccount = new System.Windows.Forms.DataGridView();
+            this.gridAccInfor = new System.Windows.Forms.DataGridView();
             this.label1 = new System.Windows.Forms.Label();
             this.lbTotalCoin = new System.Windows.Forms.Label();
             this.btnGetCoin = new System.Windows.Forms.Button();
@@ -36,11 +36,10 @@
             this.label3 = new System.Windows.Forms.Label();
             this.lbCountAll = new System.Windows.Forms.Label();
             this.lbCountSelected = new System.Windows.Forms.Label();
-            this.btnGetToken = new System.Windows.Forms.Button();
             this.txtUserNhanXu = new System.Windows.Forms.TextBox();
             this.label4 = new System.Windows.Forms.Label();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
-            this.checkBox1 = new System.Windows.Forms.CheckBox();
+            this.ckbAllXu = new System.Windows.Forms.CheckBox();
             this.numSoXuTang = new System.Windows.Forms.NumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
             this.numLuong = new System.Windows.Forms.NumericUpDown();
@@ -49,24 +48,27 @@
             this.lbTotalCoinSell = new System.Windows.Forms.Label();
             this.label7 = new System.Windows.Forms.Label();
             this.lblCountCanSell = new System.Windows.Forms.Label();
-            ((System.ComponentModel.ISupportInitialize)(this.grdAccount)).BeginInit();
+            this.label8 = new System.Windows.Forms.Label();
+            this.lbLastCheck = new System.Windows.Forms.Label();
+            this.lbDiffXu = new System.Windows.Forms.Label();
+            ((System.ComponentModel.ISupportInitialize)(this.gridAccInfor)).BeginInit();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numSoXuTang)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numLuong)).BeginInit();
             this.SuspendLayout();
             // 
-            // grdAccount
+            // gridAccInfor
             // 
-            this.grdAccount.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.grdAccount.Location = new System.Drawing.Point(2, 100);
-            this.grdAccount.Name = "grdAccount";
-            this.grdAccount.Size = new System.Drawing.Size(840, 438);
-            this.grdAccount.TabIndex = 0;
-            this.grdAccount.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.grdAccount_CellPainting);
-            this.grdAccount.RowPostPaint += new System.Windows.Forms.DataGridViewRowPostPaintEventHandler(this.grdAccount_RowPostPaint);
-            this.grdAccount.SelectionChanged += new System.EventHandler(this.grdAccount_SelectionChanged);
-            this.grdAccount.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grdAccount_KeyDown);
-            this.grdAccount.MouseClick += new System.Windows.Forms.MouseEventHandler(this.grdAccount_MouseClick);
+            this.gridAccInfor.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.gridAccInfor.Location = new System.Drawing.Point(2, 100);
+            this.gridAccInfor.Name = "gridAccInfor";
+            this.gridAccInfor.Size = new System.Drawing.Size(840, 438);
+            this.gridAccInfor.TabIndex = 0;
+            this.gridAccInfor.CellPainting += new System.Windows.Forms.DataGridViewCellPaintingEventHandler(this.grdAccount_CellPainting);
+            this.gridAccInfor.RowPostPaint += new System.Windows.Forms.DataGridViewRowPostPaintEventHandler(this.grdAccount_RowPostPaint);
+            this.gridAccInfor.SelectionChanged += new System.EventHandler(this.grdAccount_SelectionChanged);
+            this.gridAccInfor.KeyDown += new System.Windows.Forms.KeyEventHandler(this.grdAccount_KeyDown);
+            this.gridAccInfor.MouseClick += new System.Windows.Forms.MouseEventHandler(this.grdAccount_MouseClick);
             // 
             // label1
             // 
@@ -91,10 +93,10 @@
             // 
             // btnGetCoin
             // 
-            this.btnGetCoin.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGetCoin.Location = new System.Drawing.Point(733, 6);
+            this.btnGetCoin.Font = new System.Drawing.Font("Roboto", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnGetCoin.Location = new System.Drawing.Point(742, 2);
             this.btnGetCoin.Name = "btnGetCoin";
-            this.btnGetCoin.Size = new System.Drawing.Size(104, 30);
+            this.btnGetCoin.Size = new System.Drawing.Size(95, 39);
             this.btnGetCoin.TabIndex = 4;
             this.btnGetCoin.Text = "Check Xu";
             this.btnGetCoin.UseVisualStyleBackColor = true;
@@ -142,17 +144,6 @@
             this.lbCountSelected.TabIndex = 8;
             this.lbCountSelected.Text = "0";
             // 
-            // btnGetToken
-            // 
-            this.btnGetToken.Font = new System.Drawing.Font("Verdana", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnGetToken.Location = new System.Drawing.Point(617, 6);
-            this.btnGetToken.Name = "btnGetToken";
-            this.btnGetToken.Size = new System.Drawing.Size(104, 30);
-            this.btnGetToken.TabIndex = 1;
-            this.btnGetToken.Text = "Get Token";
-            this.btnGetToken.UseVisualStyleBackColor = true;
-            this.btnGetToken.Click += new System.EventHandler(this.btnGetToken_Click);
-            // 
             // txtUserNhanXu
             // 
             this.txtUserNhanXu.Location = new System.Drawing.Point(82, 18);
@@ -171,7 +162,7 @@
             // 
             // groupBox1
             // 
-            this.groupBox1.Controls.Add(this.checkBox1);
+            this.groupBox1.Controls.Add(this.ckbAllXu);
             this.groupBox1.Controls.Add(this.numSoXuTang);
             this.groupBox1.Controls.Add(this.label5);
             this.groupBox1.Controls.Add(this.label4);
@@ -183,16 +174,16 @@
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Tặng xu";
             // 
-            // checkBox1
+            // ckbAllXu
             // 
-            this.checkBox1.AutoSize = true;
-            this.checkBox1.Location = new System.Drawing.Point(170, 44);
-            this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(51, 17);
-            this.checkBox1.TabIndex = 13;
-            this.checkBox1.Text = "All xu";
-            this.checkBox1.UseVisualStyleBackColor = true;
-            this.checkBox1.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
+            this.ckbAllXu.AutoSize = true;
+            this.ckbAllXu.Location = new System.Drawing.Point(170, 44);
+            this.ckbAllXu.Name = "ckbAllXu";
+            this.ckbAllXu.Size = new System.Drawing.Size(51, 17);
+            this.ckbAllXu.TabIndex = 13;
+            this.ckbAllXu.Text = "All xu";
+            this.ckbAllXu.UseVisualStyleBackColor = true;
+            this.ckbAllXu.CheckedChanged += new System.EventHandler(this.checkBox1_CheckedChanged);
             // 
             // numSoXuTang
             // 
@@ -228,7 +219,7 @@
             0,
             0,
             0});
-            this.numLuong.Location = new System.Drawing.Point(556, 12);
+            this.numLuong.Location = new System.Drawing.Point(628, 13);
             this.numLuong.Minimum = new decimal(new int[] {
             10,
             0,
@@ -246,7 +237,7 @@
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(516, 15);
+            this.label6.Location = new System.Drawing.Point(588, 16);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(37, 13);
             this.label6.TabIndex = 13;
@@ -294,11 +285,41 @@
             this.lblCountCanSell.TabIndex = 17;
             this.lblCountCanSell.Text = "0";
             // 
+            // label8
+            // 
+            this.label8.AutoSize = true;
+            this.label8.Location = new System.Drawing.Point(516, 545);
+            this.label8.Name = "label8";
+            this.label8.Size = new System.Drawing.Size(63, 13);
+            this.label8.TabIndex = 18;
+            this.label8.Text = "Last check:";
+            // 
+            // lbLastCheck
+            // 
+            this.lbLastCheck.AutoSize = true;
+            this.lbLastCheck.Location = new System.Drawing.Point(581, 545);
+            this.lbLastCheck.Name = "lbLastCheck";
+            this.lbLastCheck.Size = new System.Drawing.Size(13, 13);
+            this.lbLastCheck.TabIndex = 19;
+            this.lbLastCheck.Text = "0";
+            // 
+            // lbDiffXu
+            // 
+            this.lbDiffXu.AutoSize = true;
+            this.lbDiffXu.Location = new System.Drawing.Point(739, 545);
+            this.lbDiffXu.Name = "lbDiffXu";
+            this.lbDiffXu.Size = new System.Drawing.Size(13, 13);
+            this.lbDiffXu.TabIndex = 20;
+            this.lbDiffXu.Text = "0";
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(844, 563);
+            this.Controls.Add(this.lbDiffXu);
+            this.Controls.Add(this.lbLastCheck);
+            this.Controls.Add(this.label8);
             this.Controls.Add(this.lblCountCanSell);
             this.Controls.Add(this.label7);
             this.Controls.Add(this.lbTotalCoinSell);
@@ -306,7 +327,6 @@
             this.Controls.Add(this.label6);
             this.Controls.Add(this.numLuong);
             this.Controls.Add(this.groupBox1);
-            this.Controls.Add(this.btnGetToken);
             this.Controls.Add(this.btnGetCoin);
             this.Controls.Add(this.lbCountSelected);
             this.Controls.Add(this.lbCountAll);
@@ -314,12 +334,12 @@
             this.Controls.Add(this.label2);
             this.Controls.Add(this.lbTotalCoin);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.grdAccount);
+            this.Controls.Add(this.gridAccInfor);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.Name = "Form1";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "TDS by HỘI TAY VỊN";
-            ((System.ComponentModel.ISupportInitialize)(this.grdAccount)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.gridAccInfor)).EndInit();
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.numSoXuTang)).EndInit();
@@ -331,15 +351,13 @@
 
         #endregion
 
-        private System.Windows.Forms.DataGridView grdAccount;
+        private System.Windows.Forms.DataGridView gridAccInfor;
         private System.Windows.Forms.Label label1;
-        private System.Windows.Forms.Label lbTotalCoin;
         private System.Windows.Forms.Button btnGetCoin;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label lbCountAll;
         private System.Windows.Forms.Label lbCountSelected;
-        private System.Windows.Forms.Button btnGetToken;
         private System.Windows.Forms.TextBox txtUserNhanXu;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.GroupBox groupBox1;
@@ -347,11 +365,15 @@
         private System.Windows.Forms.NumericUpDown numSoXuTang;
         private System.Windows.Forms.NumericUpDown numLuong;
         private System.Windows.Forms.Label label6;
-        private System.Windows.Forms.CheckBox checkBox1;
+        private System.Windows.Forms.CheckBox ckbAllXu;
         private System.Windows.Forms.Button btnNhanXuTim;
         private System.Windows.Forms.Label lbTotalCoinSell;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.Label lblCountCanSell;
+        private System.Windows.Forms.Label label8;
+        private System.Windows.Forms.Label lbLastCheck;
+        private System.Windows.Forms.Label lbDiffXu;
+        private System.Windows.Forms.Label lbTotalCoin;
     }
 }
 

@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net.Http;
 using System.Net;
-using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text.RegularExpressions;
@@ -13,13 +11,10 @@ namespace BVH.TDS
     public class TDSProxy
     {
         private static string TDS_URL = "https://traodoisub.com";
-        private static Uri TDS_URI = new Uri(TDS_URL);
         private static string COOKIE_NAME = "PHPSESSID";
-
         private CookieContainer _cookieContainer { get; set; }
         private HttpClient _client { get; set; }
         private HttpClientHandler _handler { get; set; }
-
         public TDSProxy()
         {
             SetupHttpRequest();
@@ -30,17 +25,15 @@ namespace BVH.TDS
             _cookieContainer = new CookieContainer();
             _handler = new HttpClientHandler() { CookieContainer = _cookieContainer };
             _client = new HttpClient(_handler) { BaseAddress = new Uri(TDS_URL) };
-
             _client.DefaultRequestHeaders.Add("user-agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.75 Safari/537.36");
             _client.DefaultRequestHeaders.Add("x-requested-with", "XMLHttpRequest");
         }
 
-        public async Task<TDSLogin2> GetToken(AccountInfor row)
+        public async Task<TDSAccountInfor> GetAccInfor(AccountInfor row)
         {
             try
             {
                 row.State = "Đang đợi lấy token";
-
                 var payload = new FormUrlEncodedContent(new[] {
                             new KeyValuePair<string, string>("username", row.Username),
                             new KeyValuePair<string, string>("password", row.Password),
@@ -48,52 +41,14 @@ namespace BVH.TDS
                 var response = await _client.PostAsync("/scr/login2.php", payload);
                 response.EnsureSuccessStatusCode();
                 var content = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<TDSLogin2>(content);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        // Get coin by token
-        public async Task<TDSResponse<TDSLogin2>> GetCoin(AccountInfor row)
-        {
-            try
-            {
-                var response = await _client.GetAsync($"/api/?fields=profile&access_token={row.AccessToken}");
-                response.EnsureSuccessStatusCode();
-                var content = await response.Content.ReadAsStringAsync();
-                return JsonConvert.DeserializeObject<TDSResponse<TDSLogin2>>(content);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        // Get coin by Id Pass
-        public async Task<TDSLogin2> GetCoin2(AccountInfor row)
-        {
-            try
-            {
-                var payload = new FormUrlEncodedContent(new[] {
-                            new KeyValuePair<string, string>("username", row.Username),
-                            new KeyValuePair<string, string>("password", row.Password),
-                        });
-                var result = await _client.PostAsync("/scr/login2.php", payload);
-                result.EnsureSuccessStatusCode();
-                var content = await result.Content.ReadAsStringAsync();
                 if (String.IsNullOrEmpty(content))
                 {
                     throw new Exception("content null");
                 }
-
-                return JsonConvert.DeserializeObject<TDSLogin2>(content);
+                return JsonConvert.DeserializeObject<TDSAccountInfor>(content);
             }
             catch (Exception ex)
             {
-                row.State = $"Lỗi khi đăng nhập: {ex.Message}!";
                 throw ex;
             }
         }
@@ -103,7 +58,6 @@ namespace BVH.TDS
             try
             {
                 row.State = "Đang đợi lấy token";
-
                 var payload = new FormUrlEncodedContent(new[] {
                             new KeyValuePair<string, string>("username", row.Username),
                             new KeyValuePair<string, string>("password", row.Password),
@@ -115,9 +69,6 @@ namespace BVH.TDS
                 {
                     throw new Exception("content null");
                 }
-
-                var loginResponse = JsonConvert.DeserializeObject<TDSResponse2>(content);
-
                 var cookie = Utilities.GetCookie(_cookieContainer, TDS_URL, COOKIE_NAME);
                 if (String.IsNullOrEmpty(cookie))
                 {
@@ -138,8 +89,6 @@ namespace BVH.TDS
                                 new KeyValuePair<string, string>("newpass", newPass),
                                 new KeyValuePair<string, string>("renewpass", newPass)
                             });
-
-            //_cookieContainer.Add(new Uri(TDS_URL), new Cookie(COOKIE_NAME, row.Cookie));
             var result = await _client.PostAsync($"/scr/doipass.php", payload);
             result.EnsureSuccessStatusCode();
             return await result.Content.ReadAsStringAsync();
@@ -192,7 +141,7 @@ namespace BVH.TDS
             return siteKey;
         }
 
-        public async Task<TDSResponse<TDSLogin2>> ConfigTiktok(AccountInfor row, string captchaPass)
+        public async Task<TDSResponse<TDSAccountInfor>> ConfigTiktok(AccountInfor row, string captchaPass)
         {
             var payload = new FormUrlEncodedContent(new[] {
                                 new KeyValuePair<string, string>("recaptcha_response", captchaPass)
@@ -201,7 +150,7 @@ namespace BVH.TDS
             var result = await _client.PostAsync($"/api/?fields=tiktok_run&id={row.TikUsername}&access_token={row.AccessToken}", payload);
             result.EnsureSuccessStatusCode();
             var content = await result.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<TDSResponse<TDSLogin2>>(content);
+            return JsonConvert.DeserializeObject<TDSResponse<TDSAccountInfor>>(content);
         }
 
 
